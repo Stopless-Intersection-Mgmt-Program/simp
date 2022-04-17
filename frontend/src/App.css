@@ -1,0 +1,82 @@
+#root {
+  width: 100%;
+  height: 100vh;
+  background: #002c36;
+
+}
+
+body {
+  color: #80959B;
+  text-align: center;
+}
+
+.settingsWrapper {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-left: 71%;
+  padding: 5%;
+  gap: 15px;
+}
+
+.btn {
+  margin: 5%;
+  padding-top: 1%;
+  background-color: #10363F;
+  border-radius: 25px;
+  box-sizing: border-box;
+  border-color: transparent;
+  color: #80959B;
+  font-size: 18px;
+  height: 30px;
+  width: 50%;
+  text-align: center;
+}
+
+.btn:hover {
+  color: #9FB0B4;
+  background-color: #204148;
+}
+
+.dropDown {
+  background-color: #10363F;
+  border-radius: 25px;
+  box-sizing: border-box;
+  border-color: transparent;
+  color: #80959B;
+  font-size: 18px;
+  height: 30px;
+  outline: 0;
+  width: 100%;
+  text-align: center;
+}
+
+.intersection {
+  position: absolute;
+  margin-top: 275px;
+  margin-left: 275px;
+  width: 48px;
+  height: 48px;
+  background: #002c36;
+  z-index: 1;
+  border-radius: 10px;
+  border: 1px solid #20464F;
+
+}
+
+.road {
+  z-index: 0;
+  width: 600px;
+  height: 50px;
+  position: absolute;
+}
+
+.lane {
+  height: 20px;
+  width: 100%;
+  margin-top: 2.5px;
+  margin-bottom: 2.5px;
+  background: #20464F;
+  border-radius: 25px
+}
