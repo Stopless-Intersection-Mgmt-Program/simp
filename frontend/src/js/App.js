@@ -1,4 +1,4 @@
-import './../css/App.css';
+import '../css/App.css';
 import { useState } from 'react';
 import DropDown from './dropdown';
 import World from './worldComponents';
