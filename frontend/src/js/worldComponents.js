@@ -21,16 +21,28 @@ const RoadComponent = (props) => {
             {/* Edit hardcode */}
             <div className="lane"
                 style={{
-                    height: 0.40 * props.roadWidth,
-                    marginTop: .05 * props.roadWidth,
+                    height: 0.15 * props.roadWidth,
+                    marginTop: .13 * props.roadWidth,
                     marginBottom: 0
                 }} />
             <div className="lane"
                 style={{
-                    height: 0.40 * props.roadWidth,
+                    height: 0.15 * props.roadWidth,
+                    marginTop: 2,
+                    marginBottom: 0,
+                }} />
+            <div className="lane"
+                style={{
+                    height: 0.15 * props.roadWidth,
                     marginTop: .10 * props.roadWidth,
                     marginBottom: 0,
 
+                }} />
+            <div className="lane"
+                style={{
+                    height: 0.15 * props.roadWidth,
+                    marginTop: 2,
+                    marginBottom: 0,
                 }} />
         </div >
     )
