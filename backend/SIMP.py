@@ -7,40 +7,29 @@ class Car:
         self.distance = distance # distance (m) relative to the enterance of the intersection (negative means approaching intersection)
         self.path = path # tuple containing starting lane and ending lane
         self.speed = speed # speed (m/s) of car relative to path
-        self.acceleration = 0 # acceleration (m/s/s) of car relative to path
-
-        self.following = None # car object to follow
-        self.gap = 0 # gap (m or ms) to car being followed
-        self.unit = "m" # unit ("m" or "s") to specify type of gap
+        self.acceleration = 0 # acceleration (m/s/s) of car relative to path, must be 0 while in intersection
+        self.critical = 0 # distance at which car clears critical section
 
 
     def accelerate(self, distance, time):
-        # sets acceleration so that car reaches distance in time (s)
-        self.acceleration = ((distance - self.distance) - self.speed * time) * 2 / (time ** 2)
+        # sets acceleration so that car reaches distance in time (s). Note that acceleration is 0 while in intersection
+        dc, df, v, t = self.distance, distance, self.speed, time
+        radical = -(4 * dc ** 2 - 4 * dc * (df - v * t) + (df + v * t) ** 2) ** 0.5
+        self.acceleration = (-2 * dc * (radical - 2 * df + 2 * v * t) + (df - v * t) * (radical - df - v * t) - 4 * dc ** 2) / (4 * dc * t ** 2)
 
 
     def time(self, distance):
-        # returns time (s) until car reaches distance (m) based on acceleration
-        if self.acceleration == 0: return (distance - self.distance) / self.speed
-        t = (-self.speed + (self.speed ** 2 + 2 * self.acceleration * (distance - self.distance)) ** 0.5) / self.acceleration
-        return t if not complex else 1
-
-
-    def follow(self):
-        # adjusts acceleration to keep gap (m or ms) to other car
-        # UPDATES: results in very harsh accelerations
-        if self.following == None: return
-        if self.unit == "m": # gap is distance
-            self.accelerate(self.following.distance, self.following.time(self.following.distance + self.gap))
-        if self.unit == "s": # gap is time
-            self.accelerate(self.following.distance, self.gap)
+        # returns time (s) until car reaches distance (m) based on acceleration. Note that acceleration is 0 while in intersection
+        dc, df, v, a = self.distance, distance, self.speed, self.acceleration
+        return (df - dc) / v if a == 0 else (-v + (v ** 2 - 2 * a * dc) ** 0.5) / a + df / (v ** 2 - 2 * a * dc) ** 0.5
 
 
     def tick(self, period):
         # increments time-varying values adjusted for period length (ms)
-        self.follow()
+        # UPDATES: needs to adjust acceleration after clearing intersection
         self.speed += self.acceleration * (period / 1000)
         self.distance += self.speed * (period / 1000)
+        if self.distance >= 0: self.acceleration = 0 # no acceleration in intersection
 
 
     def render(self, size):
@@ -55,21 +44,21 @@ class Car:
             else: x, y, angle = 0.795 * size, self.distance, 0
 
         elif turn == 0: # U turn
-            cut, radius = 1 / 2, 0.21 * size
+            cut, radius = 0.5, 0.21 * size
             arc = cut * (2 * math.pi * radius) # length of turn
             angle = self.distance / radius # angle completed
             if self.distance >= arc: x, y, angle = 0.205 * size, - (self.distance - arc), math.pi # if passed intersection
             else: x, y = 0.415 * size + radius * math.cos(angle), radius * math.sin(angle)
             
         elif turn == 1: # left turn
-            cut, radius = 1 / 4, 0.625 * size
+            cut, radius = 0.25, 0.625 * size
             arc = cut * (2 * math.pi * radius)
             angle = self.distance / radius
             if self.distance >= arc: x, y, angle = - (self.distance - arc), 0.625 * size, math.pi / 2
             else: x, y = radius * math.cos(angle), radius * math.sin(angle)
 
         elif turn == 3: # right turn
-            cut, radius = 1 / 4, 0.205 * size
+            cut, radius = 0.25, 0.205 * size
             arc = cut * (2 * math.pi * radius)
             angle = -self.distance / radius
             if self.distance >= arc: x, y, angle = size + (self.distance - arc), 0.205 * size, -math.pi / 2
@@ -83,7 +72,7 @@ class Car:
         return 0, 0, 0 # lane not yet implemented
 
 
-    def tkrender(self, size, canvas, scale, color):
+    def tkrender(self, size, canvas, scale):
         # draws and returns polygon on tkinter canvas in accordance to scale (pixels / m)
         ps = []
         l, w = 4, 2 # size of rectangle
@@ -100,7 +89,7 @@ class Car:
             ps.append(int(canvas.cget("width")) / 2 + px * scale)
             ps.append(int(canvas.cget("height")) / 2 - py * scale)
 
-        return canvas.create_polygon(ps, fill=color, width=2, outline="white")
+        return canvas.create_polygon(ps, fill="grey", width=2, outline="white")
 
 
 
@@ -115,17 +104,19 @@ class Intersection:
 
     def schedule(self, car):
         # adds new car for intersection to schedule
-        self.cars.append(car)
         # based on scheduling algorithm, should assign a car to follow
+        if len(self.cars) > 0: self.follow(car, self.cars[-1]) # FIFO
+        self.cars.append(car)
         return # to be implemented
 
 
-    def separate(self, car1, car2):
+    def follow(self, car1, car2):
         # sets car1 to pass through intersection immediately after car2
         # if car1 and car2 do not share a critical section, do nothing
+        # UPDATES: needs to consider other cars along path
         overlap = self.overlap(car1.path, car2.path)
         if overlap == None: return
-        car1.accelerate(overlap[0], car2.time(overlap[1]))
+        car1.accelerate(overlap[0], car2.time(overlap[1])) # what if car2 will not make it to overlap[1] given current acceleration?
         return # to be implemented
 
 
@@ -133,6 +124,10 @@ class Intersection:
         # returns start distance on path1 and end distance on path2 of critical section
         # if there is no critical section, returns None
         # can be implemented as a table for each intersection layout
+        arc = 2 * math.pi * (0.625 * self.size)
+        if path1 == (7, 1) and path2 == (1, 3): return arc / 8, arc / 8
+        if path1 == (1, 3) and path2 == (7, 1): return arc / 12, arc / 6
+        if path1 == (5, 7) and path2 == (7, 1): return arc / 8, arc / 8
         return # to be implemented
 
 
@@ -140,6 +135,9 @@ class Intersection:
         # ticks each car and increments the time
         for car in self.cars: car.tick(period)
         self.time = (self.time + period) % (2 ** 63 - 1)
+
+    def tkrender(self, canvas, scale):
+        for car in self.cars: car.tkrender(self.size, canvas, scale)
 
 
 
@@ -153,18 +151,20 @@ canvas = tk.Canvas(root, bg="grey15", height=400, width=800)
 canvas.pack()
 
 # sample code
-car0 = Car(0, -30, (1, 3), 30) # car going straight starting 100m before intersection going 20 m/s
-car1 = Car(0, -50, (7, 1), 30) # same as car0, just 30m behind and opposite side
-car2 = Car(0, -40, (1, 3), 30) # same as car0, just 10m behind
+intersection = Intersection(0, 40)
 
-car1.following, car1.gap, car1.unit = car0, 3, "m"
-car2.following, car2.gap, car2.unit = car0, 17, "m"
+car0 = Car(0, -20, (1, 3), 30)
+car1 = Car(1, -40, (7, 1), 30)
+car2 = Car(2, -60, (5, 7), 30)
 
-cars = [car0, car1, car2]
+intersection.schedule(car0)
+intersection.schedule(car1)
+intersection.schedule(car2)
+
 while True:
     canvas.delete("all")
-    for car in cars: car.tick(10)
-    for car in cars: car.tkrender(30, canvas, 5, "grey")
+    intersection.tick(10)
+    intersection.tkrender(canvas, 5)
     canvas.update()
-    root.after(10) # <== ...as this value
+    root.after(10)
 root.mainloop()
