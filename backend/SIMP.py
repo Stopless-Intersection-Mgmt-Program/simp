@@ -51,7 +51,6 @@ class Car:
 
     def render(self, size):
         # returns coordinates (m) and angle (rad) realtive to center based on path and distance
-        # UPDATES: currently only handles a 1, 3, 5, 7 intersection
         x, y, angle = 0, 0, 0 # relative to the bottom left of starting lane
         lin, lout = self.path
         turn = (lout - lin) % 8 // 2 # calculate the modulo difference
@@ -106,7 +105,7 @@ class Car:
             ps.append(int(canvas.cget("width")) / 2 + px * scale)
             ps.append(int(canvas.cget("height")) / 2 - py * scale)
 
-        return canvas.create_polygon(ps, fill="grey", width=2, outline="white")
+        return canvas.create_polygon(ps, fill="grey", width=2, outline="white") # draw polygon
 
 
 
@@ -122,19 +121,24 @@ class Intersection:
     def schedule(self, car):
         # adds new car for intersection to schedule
         # based on scheduling algorithm, should assign a car to follow
+
+        # TEMPORARY CODE FOR TESTING
         if len(self.cars) > 0: self.follow(car, self.cars[-1]) # FIFO
         self.cars.append(car)
+
         return # to be implemented
 
 
     def follow(self, car1, car2):
         # sets car1 to pass through intersection immediately after car2
         # if car1 and car2 do not share a critical section, do nothing
-        # UPDATES: needs to consider other cars along path
+
+        # TEMPORARY CODE FOR TESTING
         overlap = self.overlap(car1.path, car2.path)
         if overlap == None: return
         stats = car2.stats(overlap[1])
         car1.course(overlap[0], stats[0], stats[1])
+
         return # to be implemented
 
 
@@ -142,11 +146,14 @@ class Intersection:
         # returns start distance on path1 and end distance on path2 of critical section
         # if there is no critical section, returns None
         # can be implemented as a table for each intersection layout
+
+        # TEMPORARY CODE FOR TESTING
         arc = 2 * math.pi * (0.625 * self.size)
         if path1 == path2: return 0, 8
         if path1 == (7, 1) and path2 == (1, 3): return arc / 8, arc / 8
         if path1 == (1, 3) and path2 == (7, 1): return arc / 16, arc / 6
         if path1 == (5, 7) and path2 == (7, 1): return arc / 8, arc / 8
+
         return # to be implemented
 
 
@@ -155,34 +162,32 @@ class Intersection:
         for car in self.cars: car.tick(period)
         self.time = (self.time + period) % (2 ** 63 - 1)
 
+
     def tkrender(self, canvas, scale):
         # renders intersection and each car on canvas
         x0, y0 = int(canvas.cget("width")) / 2 + self.size / 2 * scale, int(canvas.cget("height")) / 2 - self.size / 2 * scale
         x1, y1 = int(canvas.cget("width")) / 2 - self.size / 2 * scale, int(canvas.cget("height")) / 2 + self.size / 2 * scale
         canvas.create_rectangle(x0, y0, x1, y1, fill="", width=2, outline="grey12")
 
-        # render cars
-        for car in self.cars: car.tkrender(self.size, canvas, scale)
+        for car in self.cars: car.tkrender(self.size, canvas, scale) # render cars
 
 
 
-
-# Test Driver Code
-
+# test code
 # create window and canvas
 root = tk.Tk()
 root.title("SIMP Simulator")
 canvas = tk.Canvas(root, bg="grey15", height=400, width=800)
 canvas.pack()
 
-# sample code
+# sample intersection and cars
 intersection = Intersection(0, 40)
 
-car0 = Car(0, -50, (1, 3), 30)
-car1 = Car(1, -40, (7, 1), 30)
-car2 = Car(2, -90, (1, 3), 30)
-car3 = Car(2, -50, (7, 1), 30)
-car4 = Car(2, -60, (5, 7), 30)
+car0 = Car(0, -50, (1, 3), 50)
+car1 = Car(1, -40, (7, 1), 50)
+car2 = Car(2, -90, (1, 3), 50)
+car3 = Car(2, -50, (7, 1), 50)
+car4 = Car(2, -60, (5, 7), 50)
 
 intersection.schedule(car0)
 intersection.schedule(car1)
@@ -190,6 +195,7 @@ intersection.schedule(car2)
 intersection.schedule(car3)
 intersection.schedule(car4)
 
+# main loop
 while True:
     canvas.delete("all")
     intersection.tick(10)
