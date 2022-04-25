@@ -26,3 +26,7 @@ Once code is implemented and ready to be pushed to the github repository enter t
 
 On the repository you should see a compare & pull request option to submit a pull request (make sure the base branch is the developmentBranch), 
 submit and then your done.
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Make sure all files are up to date with the current developmentBranch, always git pull before committing and pushing to development.
