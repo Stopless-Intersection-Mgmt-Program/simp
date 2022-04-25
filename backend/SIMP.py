@@ -7,34 +7,50 @@ class Car:
         self.distance = distance # distance (m) relative to the enterance of the intersection (negative means approaching intersection)
         self.path = path # tuple containing starting lane and ending lane
         self.speed = speed # speed (m/s) of car relative to path
-        self.acceleration = 0 # acceleration (m/s/s) of car relative to path, must be 0 while in intersection
-        self.critical = 0 # distance at which car clears critical section
+
+        self.acceleration = 0 # acceleration (m/s/s) of car relative to path
+        self.jerk = 0 # jerk (m/s/s/s) of car relative to path (change in acceleration)
 
 
-    def accelerate(self, distance, time):
-        # sets acceleration so that car reaches distance in time (s). Note that acceleration is 0 while in intersection
-        dc, df, v, t = self.distance, distance, self.speed, time
-        radical = -(4 * dc ** 2 - 4 * dc * (df - v * t) + (df + v * t) ** 2) ** 0.5
-        self.acceleration = (-2 * dc * (radical - 2 * df + 2 * v * t) + (df - v * t) * (radical - df - v * t) - 4 * dc ** 2) / (4 * dc * t ** 2)
+    def course(self, distance, time, speed):
+        # sets acceleration (m/s/s) and jerk (m/s/s/s) so that car reaches distance (m) at speed (m/s) in time (s)
+        dc, df, vc, vf, t = self.distance, distance, self.speed, speed, time
+
+        # these equations are based on a rather complicated solution to a system
+        self.acceleration = -2 * (vf ** 2 * (2 * vc * t - df + 3 * dc) + vf ** 3 * t - 2 * df * vc * vf) / (vf ** 2 * t ** 2 - 2 * df * vf * t + df ** 2)
+        self.jerk = 6 * (vf ** 3 * (vc * t - df + 2 * dc) + vf ** 4 * t - df * vc * vf ** 2) / (vf ** 3 * t ** 3 - 3 * df * vf ** 2 * t ** 2 + 3 * df ** 2 * vf * t - df ** 3)
 
 
-    def time(self, distance):
-        # returns time (s) until car reaches distance (m) based on acceleration. Note that acceleration is 0 while in intersection
-        dc, df, v, a = self.distance, distance, self.speed, self.acceleration
-        return (df - dc) / v if a == 0 else (-v + (v ** 2 - 2 * a * dc) ** 0.5) / a + df / (v ** 2 - 2 * a * dc) ** 0.5
+    def stats(self, distance):
+        # returns time (s) until car reaches distance (m) and speed (m/s) based on acceleration (m/s/s) and jerk (m/s/s/s)
+        dc, df, v, a, j = self.distance, distance, self.speed, self.acceleration, self.jerk 
+        if j == 0 and a == 0: return (df - dc) / v, v # if no jerk and acceleration, then speed is constant
+
+        # the solution to the position equation yields three roots, t0, t1, and t2, which can be complex
+        rad = (((8 * j * v ** 3 - 3 * a ** 2 * v ** 2 - 18 * a * dc * j * v + 9 * dc ** 2 * j ** 2 + 6 * a ** 3 * dc) ** 0.5 + 3 * a * v - 3 * dc * j) / (j ** 2) - a ** 3 / j ** 3) ** (1 / 3)
+        t0 = (rad - (2 * v / j - a ** 2 / j ** 2) / rad - (a / j))
+        t1 = ((-1 - (-3) ** 0.5) / 2 * rad - ((-3) ** 0.5 - 1) / 2 * (2 * v / j - a ** 2 / j ** 2) / rad - (a / j))
+        t2 = (((-3) ** 0.5 - 1) / 2 * rad - (-1 - (-3) ** 0.5) / 2 * (2 * v / j - a ** 2 / j ** 2) / rad - (a / j))
+        t = min(t.real for t in [t0, t1, t2] if t.real > 0 and abs(t.imag) < 0.001) # choose the first positive real solution
+
+        return t + df / (0.5 * j * t ** 2 + a * t + v), 0.5 * j * t ** 2 + a * t + v # calculate total time and final speed
 
 
     def tick(self, period):
         # increments time-varying values adjusted for period length (ms)
-        # UPDATES: needs to adjust acceleration after clearing intersection
-        self.speed += self.acceleration * (period / 1000)
-        self.distance += self.speed * (period / 1000)
-        if self.distance >= 0: self.acceleration = 0 # no acceleration in intersection
+        d, v, a, j, t = self.distance, self.speed, self.acceleration, self.jerk, period / 1000
+        if d >= 0: self.distance = v * t + d # if passed intersection, speed is constant
+
+        else: # if before intersection consider jerk and acceleration
+            df = 1 / 6 * j * t ** 3 + 0.5 * a * t ** 2 + v * t + d
+            if df < 0: self.distance, self.speed, self.acceleration = df, 0.5 * j * t ** 2 + a * t + v, j * t + a
+            else: # this is the period where we cross into the intersection
+                ti, vf = self.stats(0)
+                self.distance, self.speed = 1 / 6 * j * ti ** 3 + 0.5 * a * ti ** 2 + v * ti + vf * (t - ti) + d, vf
 
 
     def render(self, size):
         # returns coordinates (m) and angle (rad) realtive to center based on path and distance
-        # UPDATES: currently only handles a 1, 3, 5, 7 intersection
         x, y, angle = 0, 0, 0 # relative to the bottom left of starting lane
         lin, lout = self.path
         turn = (lout - lin) % 8 // 2 # calculate the modulo difference
@@ -89,7 +105,7 @@ class Car:
             ps.append(int(canvas.cget("width")) / 2 + px * scale)
             ps.append(int(canvas.cget("height")) / 2 - py * scale)
 
-        return canvas.create_polygon(ps, fill="grey", width=2, outline="white")
+        return canvas.create_polygon(ps, fill="grey", width=2, outline="white") # draw polygon
 
 
 
@@ -105,18 +121,24 @@ class Intersection:
     def schedule(self, car):
         # adds new car for intersection to schedule
         # based on scheduling algorithm, should assign a car to follow
+
+        # TEMPORARY CODE FOR TESTING
         if len(self.cars) > 0: self.follow(car, self.cars[-1]) # FIFO
         self.cars.append(car)
+
         return # to be implemented
 
 
     def follow(self, car1, car2):
         # sets car1 to pass through intersection immediately after car2
         # if car1 and car2 do not share a critical section, do nothing
-        # UPDATES: needs to consider other cars along path
+
+        # TEMPORARY CODE FOR TESTING
         overlap = self.overlap(car1.path, car2.path)
         if overlap == None: return
-        car1.accelerate(overlap[0], car2.time(overlap[1])) # what if car2 will not make it to overlap[1] given current acceleration?
+        stats = car2.stats(overlap[1])
+        car1.course(overlap[0], stats[0], stats[1])
+
         return # to be implemented
 
 
@@ -124,10 +146,14 @@ class Intersection:
         # returns start distance on path1 and end distance on path2 of critical section
         # if there is no critical section, returns None
         # can be implemented as a table for each intersection layout
+
+        # TEMPORARY CODE FOR TESTING
         arc = 2 * math.pi * (0.625 * self.size)
+        if path1 == path2: return 0, 8
         if path1 == (7, 1) and path2 == (1, 3): return arc / 8, arc / 8
-        if path1 == (1, 3) and path2 == (7, 1): return arc / 12, arc / 6
+        if path1 == (1, 3) and path2 == (7, 1): return arc / 16, arc / 6
         if path1 == (5, 7) and path2 == (7, 1): return arc / 8, arc / 8
+
         return # to be implemented
 
 
@@ -136,31 +162,40 @@ class Intersection:
         for car in self.cars: car.tick(period)
         self.time = (self.time + period) % (2 ** 63 - 1)
 
+
     def tkrender(self, canvas, scale):
-        for car in self.cars: car.tkrender(self.size, canvas, scale)
+        # renders intersection and each car on canvas
+        x0, y0 = int(canvas.cget("width")) / 2 + self.size / 2 * scale, int(canvas.cget("height")) / 2 - self.size / 2 * scale
+        x1, y1 = int(canvas.cget("width")) / 2 - self.size / 2 * scale, int(canvas.cget("height")) / 2 + self.size / 2 * scale
+        canvas.create_rectangle(x0, y0, x1, y1, fill="", width=2, outline="grey12")
+
+        for car in self.cars: car.tkrender(self.size, canvas, scale) # render cars
 
 
 
-
-# Test Driver Code
-
+# test code
 # create window and canvas
 root = tk.Tk()
 root.title("SIMP Simulator")
 canvas = tk.Canvas(root, bg="grey15", height=400, width=800)
 canvas.pack()
 
-# sample code
+# sample intersection and cars
 intersection = Intersection(0, 40)
 
-car0 = Car(0, -20, (1, 3), 30)
-car1 = Car(1, -40, (7, 1), 30)
-car2 = Car(2, -60, (5, 7), 30)
+car0 = Car(0, -50, (1, 3), 50)
+car1 = Car(1, -40, (7, 1), 50)
+car2 = Car(2, -90, (1, 3), 50)
+car3 = Car(2, -50, (7, 1), 50)
+car4 = Car(2, -60, (5, 7), 50)
 
 intersection.schedule(car0)
 intersection.schedule(car1)
 intersection.schedule(car2)
+intersection.schedule(car3)
+intersection.schedule(car4)
 
+# main loop
 while True:
     canvas.delete("all")
     intersection.tick(10)
