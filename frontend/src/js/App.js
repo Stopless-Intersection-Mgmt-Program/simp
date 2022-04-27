@@ -83,7 +83,7 @@ const App = () => {
           className='btn'
           width="100%"
           onClick={(event) => { setBtnActive(!btnActive); btnActive ? pauseState() : statetoJSON()}}>
-          /*{btnActive ? "Pause" : "Begin"}
+          {btnActive ? "Pause" : "Begin"}
         </div>
       </div>
     </>
