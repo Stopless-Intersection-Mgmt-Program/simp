@@ -14,6 +14,7 @@ const App = () => {
   const [btnActive, setBtnActive] = useState(false);
   const [situationValue, setSituationValue] = useState('Any');
   const [intersectionValue, setIntersectionValue] = useState('4-Way Intersection');
+  const [AlgorithmValue, setAlgorithmValue] = useState('First Come First Served');
 
   return (
     <>
@@ -30,7 +31,8 @@ const App = () => {
       <World
         worldWidth={600}
         worldHeight={600}
-        intersectionType={intersectionValue} />
+        intersectionType={intersectionValue}
+        algorithmType={AlgorithmValue} />
 
       {/* SettingsWrapper 
             Holds the dropdownComponent,
@@ -46,6 +48,7 @@ const App = () => {
         <label htmlFor='algorithm'>Algorithm:</label>
         <DropDown
           id='algorithm'
+          setValueForParent={setAlgorithmValue}
           options={['First Come First Served', 'Shortest Job Next', 'Priority Scheduling', 'Round Robin', '... Add More']} />
 
         <label htmlFor='intersection'>Intersection:</label>
