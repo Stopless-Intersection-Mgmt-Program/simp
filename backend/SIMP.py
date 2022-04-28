@@ -177,17 +177,17 @@ class Intersection:
 # create window and canvas
 root = tk.Tk()
 root.title("SIMP Simulator")
-canvas = tk.Canvas(root, bg="grey15", height=400, width=800)
+canvas = tk.Canvas(root, bg="grey15", height=800, width=1600)
 canvas.pack()
 
 # sample intersection and cars
 intersection = Intersection(0, 40)
 
-car0 = Car(0, -50, (1, 3), 50)
-car1 = Car(1, -40, (7, 1), 50)
-car2 = Car(2, -90, (1, 3), 50)
-car3 = Car(2, -50, (7, 1), 50)
-car4 = Car(2, -60, (5, 7), 50)
+car0 = Car(0, -120, (1, 3), 50)
+car1 = Car(1, -170, (7, 1), 50)
+car2 = Car(2, -180, (1, 3), 50)
+car3 = Car(2, -200, (7, 1), 50)
+car4 = Car(2, -210, (5, 7), 50)
 
 intersection.schedule(car0)
 intersection.schedule(car1)
@@ -199,7 +199,7 @@ intersection.schedule(car4)
 while True:
     canvas.delete("all")
     intersection.tick(10)
-    intersection.tkrender(canvas, 5)
+    intersection.tkrender(canvas, 4)
     canvas.update()
     root.after(10)
 root.mainloop()

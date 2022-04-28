@@ -13,7 +13,9 @@ class Intersection:
         # based on scheduling algorithm, should assign a car to follow
 
         # TEMPORARY CODE FOR TESTING
-        if len(self.cars) > 0: self.follow(car, self.cars[-1]) # FIFO
+        if len(self.cars) > 0:
+            for fcar in reversed(self.cars):
+                if self.follow(car, fcar): break
         self.cars.append(car)
 
         return # to be implemented
@@ -25,9 +27,13 @@ class Intersection:
 
         # TEMPORARY CODE FOR TESTING
         overlap = self.overlap(car1.path, car2.path)
-        if overlap == None: return
-        stats = car2.stats(overlap[1])
-        car1.course(overlap[0], stats[0], stats[1])
+        if overlap == None: return False
+        goal = car2.timeTo(overlap[1])
+        fastest, slowest = car1.rangeTo(overlap[0])
+        if goal < fastest: car1.setCourse(overlap[0], fastest)
+        if goal <= slowest: car1.setCourse(overlap[0], goal)
+        if goal > slowest: print("Houston, we got a problem...")
+        return True
 
         return # to be implemented
 
