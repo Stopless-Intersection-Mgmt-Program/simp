@@ -1,6 +1,7 @@
 import tkinter as tk
 import Car as c
 import Intersection as i
+import TrafficLight as tl
 
 # test code
 # create window and canvas
@@ -9,8 +10,10 @@ root.title("SIMP Simulator")
 canvas = tk.Canvas(root, bg="grey15", height=800, width=1600)
 canvas.pack()
 
-# sample intersection and cars
-intersection = i.Intersection(0, 40)
+
+# # sample intersection and cars
+# intersection = i.Intersection(0, 40)
+intersection = tl.TrafficLight(40)
 
 # spawn cars
 car0 = c.Car(0, -200, (1, 3))
@@ -32,13 +35,12 @@ intersection.schedule(car5)
 intersection.schedule(car6)
 intersection.schedule(car7)
 
-print(car2.course)
 
 # main loop
 while True:
     canvas.delete("all")
-    intersection.tick(10)
+    intersection.tick(20)
     intersection.tkrender(canvas, 4)
     canvas.update()
-    root.after(10)
+    root.after(20)
 root.mainloop()

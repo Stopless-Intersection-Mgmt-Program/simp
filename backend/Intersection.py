@@ -4,15 +4,16 @@ class Intersection:
     def __init__(self, algorithm, size):
         self.algorithm = algorithm
         self.size = size # length (m) of one side of the intersection
-        self.time = 0 # clock to track time (ms) elapsed
+        self.time = 0 # clock to track time (s) elapsed
         self.cars = [] # list of cars monitored by the intersection
 
 
     def schedule(self, car):
-        # adds new car for intersection to schedule
+        # adds car for intersection to handle
         # based on scheduling algorithm, should assign a car to follow
 
         # TEMPORARY CODE FOR TESTING
+        car.time = self.time # synchronize clocks
         if len(self.cars) > 0:
             for fcar in reversed(self.cars):
                 if self.follow(car, fcar): break
@@ -54,9 +55,9 @@ class Intersection:
 
 
     def tick(self, period):
-        # ticks each car and increments the time
-        self.time = (self.time + period) % (2 ** 63 - 1)
-        for car in self.cars: car.tick(self.time / 1000)
+        # ticks each car and increments the time for period (ms)
+        self.time = self.time + period / 1000
+        for car in self.cars: car.tick(self.time) # tick each car
 
 
     def tkrender(self, canvas, scale):
@@ -65,4 +66,4 @@ class Intersection:
         x1, y1 = int(canvas.cget("width")) / 2 - self.size / 2 * scale, int(canvas.cget("height")) / 2 + self.size / 2 * scale
         canvas.create_rectangle(x0, y0, x1, y1, fill="", width=2, outline="grey12")
 
-        for car in self.cars: car.tkrender(self.size, canvas, scale) # render cars
+        for car in self.cars: car.tkrender(self.size, canvas, scale) # render each car
