@@ -36,12 +36,14 @@ class TrafficLight:
 
     def green(self, lane):
         # sets cars in lane to go and returns the time (s) when the last car clears the intersection
-        t = 0
+        td, ts = 0, 0
         for i in range(len(self.lanes[lane])):
             car = self.lanes[lane].pop(0)
-            self.go(car, 40, i * 0.2) # CAN RESULT IN COLLISION... NEEDS FIXING
-            t = car.timeTo(60) # a distance of 50 will clear any other cars
-        return t # will be 0 if no cars in lane
+            t = (40 - car.speed) / car.acceleration + self.time # time car will reach final speed
+            d = max(i * 0.2, ts - t)
+            self.go(car, 40, d)
+            td, ts = car.timeTo(60), t + d # a distance of 50 will clear any other cars
+        return td # will be 0 if no cars in lane
 
 
     def stop(self, car, distance):

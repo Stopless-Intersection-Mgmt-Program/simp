@@ -12,7 +12,7 @@ canvas.pack()
 
 
 # # sample intersection and cars
-# intersection = i.Intersection(0, 40)
+intersection = i.Intersection(0, 40)
 intersection = tl.TrafficLight(40)
 
 # spawn cars
