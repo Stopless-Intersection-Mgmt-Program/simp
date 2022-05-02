@@ -1,10 +1,30 @@
 import '../css/App.css';
 import { useState } from 'react';
 import DropDown from './dropdown';
-import World from './worldComponents';
+import { World, layoutMappings } from './worldComponents';
+import axios from 'axios';
 
+function stateToJSON(state) {
+  console.log("JSON transfer started with,", state)
+
+  axios
+    .post('http://localhost:3001/apiStartProcess', state)
+    .then((output) => console.log("JSON transferred to express:", output))
+
+}
+
+function pauseState(bool) {
+  console.log("Pause state initiated with bool", bool)
+  let pauseState = { state: { pause: bool } }
+  axios
+    .post('http://localhost:3001/apiPauseState', pauseState)
+    .then(() => console.log("Pause state sent"))
+}
 
 const App = () => {
+  const vw = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0)
+  const vh = Math.max(document.documentElement.clientHeight || 0, window.innerHeight || 0)
+  const intersectionLength = vw * .396825
 
   /* UseState Hooks
       Forces a rerender of associated components when
@@ -15,6 +35,14 @@ const App = () => {
   const [situationValue, setSituationValue] = useState('Any');
   const [intersectionValue, setIntersectionValue] = useState('4-Way Intersection');
   const [algorithmValue, setAlgorithmValue] = useState('First Come First Served');
+
+  const [criticalState, setCriticalState] = useState({
+    state:
+    {
+      cars: ['NULL'],
+      intersection: [intersectionLength, layoutMappings[intersectionValue], algorithmValue, situationValue] //waiting for algorithmType to be saved currently 0
+    }
+  })
 
   return (
     <>
@@ -85,7 +113,7 @@ const App = () => {
           id='btn'
           className='btn'
           width="100%"
-          onClick={(event) => { setBtnActive(!btnActive); btnActive ? pauseState() : statetoJSON()}}>
+          onClick={(event) => { setBtnActive(!btnActive); btnActive ? pauseState(btnActive) : stateToJSON(criticalState) }}>
           {btnActive ? "Pause" : "Begin"}
         </div>
       </div>
