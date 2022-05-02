@@ -123,4 +123,4 @@ const World = (props) => {
     )
 }
 
-export default World;
+export { World, layoutMappings };
