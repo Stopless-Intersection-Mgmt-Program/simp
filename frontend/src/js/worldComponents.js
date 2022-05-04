@@ -16,7 +16,7 @@ const CarComponent = (props) => {
                 width: 4 //Will generate random dimensions in sprint 4 
                 left: props.left
                 top: props.top
-                tranform: `rotate(${props.angle})`
+                transform: `rotate(${props.angle})`
             }}>
         </div>
     )
