@@ -8,15 +8,25 @@ class Car:
 
         self.time = 0 # time (s) used by intersection to synchronize behavior
         self.distance = distance # distance (m) relative to the enterance of the intersection (negative means approaching intersection)
-        self.speed = 40 # speed (m/s) of car relative to path
+        self.speed = 40.0001 # speed (m/s) of car relative to path
         self.course = None # tuple containing a start time, switching time, end time, and acceleration
 
 
-    def setCourse(self, distance, time):
-        # sets course to reach distance (m) at time (s) with current speed
-        dc, df, tc, tf, v = self.distance, distance, self.time, time, self.speed
-        a = 4 * ((df - dc) - (tf - tc) * v) / (tf - tc) ** 2
-        self.course = (tc, 0.5 * (tf + tc), tf, a)
+    def setCourse(self, distance, time, speed):
+        # sets course to reach distance (m) at time (s) with speed (m/s)
+        dc, df, tc, tf, vc, vf = self.distance, distance, self.time, time, self.speed, speed
+        if vf == vc: # no change in speed
+            a = 4 * ((df - dc) - (tf - tc) * vf) / (tf - tc) ** 2
+            t = (tf + tc) / 2
+
+        else: # change in speed
+            sign = 1 if (vf + vc) / 2 * (tf - tc) < df - dc else -1 # determine sign of radical
+            rad = sign * (2 * (2 * (df ** 2 + ((tc - tf) * (vf + vc) - 2 * dc) * df + (tf - tc) * (vf + vc) * dc + dc ** 2) + (tf ** 2 - 2 * tc * tf + tc ** 2) * (vf ** 2 + vc ** 2))) ** 0.5
+            a = (rad + 2 * df - 2 * dc + (tc - tf) * (vf + vc)) / (tf ** 2 - 2 * tc * tf + tc ** 2)
+            t = (rad - 2 * df + 2 * dc + (2 * tf - 2 * tc) * vf) / (2 * vf - 2 * vc)
+        
+        # assign course
+        self.course = (tc, tc + t, tf, a)
 
 
     def timeTo(self, distance):
@@ -45,16 +55,11 @@ class Car:
             return tc + (df - dc) / v
 
 
-    def rangeTo(self, distance):
-        # returns interval of times (s) that car could arrive at distance (m) with current speed
-        dc, df, tc, v, a = self.distance, distance, self.time, self.speed, self.acceleration
-        if self.course != None: # course already set
-            t = self.timeTo(distance)
-            return t, t
-        ts = 2 * ((a * (df - dc) + v ** 2) ** 0.5 - v) / a + tc
-        tl = -2 * ((v ** 2 - a * (df - dc)) ** 0.5 - v) / a + tc
-        return ts, (tl if not isinstance(tl, complex) else -1) # -1 if infinite
-
+    def rangeTo(self, distance, speed):
+        # returns interval of times (s) that car could arrive at distance (m) with speed (m/s)
+        dc, df, tc, vc, vf, a = self.distance, distance, self.time, self.speed, speed, self.acceleration
+        return # to be implemented
+        
 
     def tick(self, time):
         # increments distance to match new time (s)
@@ -90,10 +95,10 @@ class Car:
     def render(self, size):
         # returns coordinates (m) and angle (rad) realtive to center based on path and distance
         dc, (li, lo) = self.distance, self.path
-        turn = (lo - li) % 8 // 2 # calculate the modulo difference
+        turn = (lo - li) % 4 # calculate the modulo difference
 
         # calculate relative to the bottom left of starting lane
-        if dc <= 0 or turn == 2: # if car is before intersection
+        if dc <= 0 or turn == 2: # if car is before intersection or going straight
             if turn == 0 or turn == 1: x, y, angle = 0.625 * size, dc, 0 # left turn lane
             else: x, y, angle = 0.795 * size, dc, 0
 
@@ -116,10 +121,10 @@ class Car:
             else: x, y = size - r * math.cos(-angle), r * math.sin(-angle)
 
         # calculate absolute position
-        if li == 1: return y - size / 2, size - x - size / 2, angle
-        if li == 3: return size - x - size / 2, size - y - size / 2, angle - math.pi / 2
-        if li == 5: return size - y - size / 2, x - size / 2, angle + math.pi
-        if li == 7: return x - size / 2, y - size / 2, angle + math.pi / 2
+        if li == 0: return y - size / 2, size - x - size / 2, angle
+        if li == 1: return size - x - size / 2, size - y - size / 2, angle - math.pi / 2
+        if li == 2: return size - y - size / 2, x - size / 2, angle + math.pi
+        if li == 3: return x - size / 2, y - size / 2, angle + math.pi / 2
 
 
     def tkrender(self, size, canvas, scale):

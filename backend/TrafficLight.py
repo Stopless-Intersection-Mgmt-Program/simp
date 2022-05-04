@@ -17,8 +17,8 @@ class TrafficLight:
         self.cars.append(car)
 
         li, lo = car.path
-        if (lo - li) % 8 // 2 < 2: lane = li # left turn lane
-        else: lane = li - 1
+        if (lo - li) % 4 < 2: lane = li * 2 + 1 # left turn lane
+        else: lane = li * 2
         stop(car, -4 - 8 * len(self.lanes[lane])) # stop car
         self.lanes[lane].append(car)
 
@@ -35,6 +35,8 @@ class TrafficLight:
 
 
     def green(self, lane):
+        # UPDATE TO ENSURE PATH SPEED IS NOT EXCEDED
+
         # sets cars in lane to go and returns the time (s) when the last car clears the intersection
         if len(self.lanes[lane]) == 0: return 0 # no wait time if no cars in lane
         for i in range(len(self.lanes[lane])):
