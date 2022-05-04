@@ -1,9 +1,9 @@
 import math
 
 class Intersection:
-    def __init__(self, algorithm, size):
+    def __init__(self, algorithm):
         self.algorithm = algorithm
-        self.size = size # length (m) of one side of the intersection
+        self.size = 40 # length (m) of one side of the intersection
         self.time = 0 # clock to track time (s) elapsed
         self.cars = [] # list of cars monitored by the intersection
 
@@ -27,7 +27,7 @@ class Intersection:
         # if car1 and car2 do not share a critical section, do nothing
 
         # TEMPORARY CODE FOR TESTING
-        overlap = self.overlap(car1.path, car2.path)
+        overlap = self.overlap(car1.path, car2.path, 0)
         if overlap == None: return False
         goal = car2.timeTo(overlap[1])
         fastest, slowest = car1.rangeTo(overlap[0])
@@ -39,19 +39,41 @@ class Intersection:
         return # to be implemented
 
 
-    def overlap(self, path1, path2):
+    def overlap(self, path1, path2, buffer):
         # returns start distance on path1 and end distance on path2 of critical section
-        # if there is no critical section, returns None
-        # can be implemented as a table for each intersection layout
+        (li1, lo1), (li2, lo2) = path1, path2
+        turn1, turn2 = (lo1 - li1) % 8 // 2, (lo2 - li2) % 8 // 2
+        reld = (li2 - li1) % 8 // 2 # relative direction of other car
 
-        # TEMPORARY CODE FOR TESTING
-        arc = 2 * math.pi * (0.625 * self.size)
-        if path1 == path2: return 0, 8
-        if path1 == (7, 1) and path2 == (1, 3): return arc / 8, arc / 8
-        if path1 == (1, 3) and path2 == (7, 1): return arc / 16, arc / 6
-        if path1 == (5, 7) and path2 == (7, 1): return arc / 8, arc / 8
+        if reld == 0: # path1 is path2
+            if turn1 // 2 == turn2 // 2: return 0, 8 # if paths have same starting lane
+            else: return None # if not in same lane, no critical section
 
-        return # to be implemented
+        if reld == 1: # path2 is left of path1
+            lcritical = [[None, None, (0, 0.5), (0.5, 1)], # U turn
+                        [(0.6, 0.7), (0.5, 0.5), (0, 0.7), None], # left turn
+                        [None, None, (0.1, 0.9), None], # straight
+                        [None, None, (0.3, 1), None]] # right turn
+            cs = lcritical[turn1][turn2]
+
+        if reld == 2: # path2 is opposite of path1
+            ocritical = [[None, None, (0.6, 1), None], # U turn
+                        [None, None, (0.6, 0.5), None], # left turn
+                        [(0.4, 0.8), (0.7, 1), None, None], # straight
+                        [None, None, None, None]] # right turn
+            cs = ocritical[turn1][turn2]
+
+        if reld == 3: # path2 is right of path1
+            rcritical = [[None, (0.3, 0.9), None, None], # U turn
+                        [None, (0.2, 0.7), None, None], # left turn
+                        [(0.2, 0.9), (0.5, 0.3), (0.6, 0.3), (0.7, 1)], # straight
+                        [(0.3, 1), None, None, None]] # right turn
+            cs = rcritical[turn1][turn2]
+        if cs == None: return None
+
+        # adjust for intersection size
+        tlengths = [math.pi * (0.21 * self.size), 0.5 * math.pi * (0.625 * self.size), self.size, 0.5 * math.pi * (0.205 * self.size)]
+        return cs[0] * tlengths[turn1], cs[1] * tlengths[turn2]
 
 
     def tick(self, period):
