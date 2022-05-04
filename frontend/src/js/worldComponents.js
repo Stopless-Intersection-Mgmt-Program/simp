@@ -2,6 +2,26 @@
 import { useEffect } from 'react';
 import 'react-dom';
 
+/* Car Component:
+    renders a car object with coordinates/angle/startPoint/endPoint dependent on the Car Spawner,
+    generates carid, car dimensions, speed, */
+const CarComponent = (props) => {
+    return (
+        <div className="car"
+            style={{
+                carId: props.carId
+                startPoint: props.startPoint
+                endPoint: props.endPoint
+                height: 2
+                width: 4 //Will generate random dimensions in sprint 4 
+                left: props.left
+                top: props.top
+                tranform: `rotate(${props.angle})`
+            }}>
+        </div>
+    )
+}
+
 
 /* Road Component: renders a road amongst an intersection,
     Every class Road contains an arbitrary amount of lanes
