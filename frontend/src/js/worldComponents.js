@@ -9,13 +9,13 @@ const CarComponent = (props) => {
     return (
         <div className="car"
             style={{
-                carId: props.carId
-                startPoint: props.startPoint
-                endPoint: props.endPoint
-                height: 2
-                width: 4 //Will generate random dimensions in sprint 4 
-                left: props.left
-                top: props.top
+                carId: props.carId,
+                startPoint: props.startPoint,
+                endPoint: props.endPoint,
+                height: 2,
+                width: 4, //Will generate random dimensions in sprint 4 
+                left: props.left,
+                top: props.top,
                 transform: `rotate(${props.angle})`
             }}>
         </div>
