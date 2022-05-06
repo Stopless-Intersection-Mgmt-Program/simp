@@ -5,10 +5,11 @@ class Car:
         self.id = id
         self.path = path # tuple containing starting lane and ending lane
         self.acceleration = 5 # acceleration (m/s/s) of car relative to path
+        self.turning = 1 # coefficient of turning (1/s)
 
         self.time = 0 # time (s) used by intersection to synchronize behavior
         self.distance = distance # distance (m) relative to the enterance of the intersection (negative means approaching intersection)
-        self.speed = 40.0001 # speed (m/s) of car relative to path
+        self.speed = 40 # speed (m/s) of car relative to path
         self.course = None # tuple containing a start time, switching time, end time, and acceleration
 
 
@@ -27,6 +28,20 @@ class Car:
         
         # assign course
         self.course = (tc, tc + t, tf, a)
+
+
+    def stop(self, distance):
+        # sets course so car stops at distance (m)
+        dc, df, tc, v = self.distance, distance, self.time, self.speed
+        a, tf = v ** 2 / (-2 * (df - dc)), 2 * (df - dc) / v + tc
+        self.course = (tc, tf, tf, a)
+
+
+    def go(self, speed, delay):
+        # sets course so car accelerates to speed (m/s) after delay (s)
+        tc, d, vc, vf, a = self.time, delay, self.speed, speed, self.acceleration
+        tf = (vf - vc) / a + tc + d
+        self.course = (tc + d, tf, tf, a)
 
 
     def timeTo(self, distance):
@@ -58,7 +73,10 @@ class Car:
     def rangeTo(self, distance, speed):
         # returns interval of times (s) that car could arrive at distance (m) with speed (m/s)
         dc, df, tc, vc, vf, a = self.distance, distance, self.time, self.speed, speed, self.acceleration
-        return # to be implemented
+        ts = ((4 * a * (df - dc) + 2 * vf ** 2 + 2 * vc ** 2 - a ** 2 * tc ** 2) ** 0.5 - vf - vc) / a
+        tl = ((4 * a * (dc - df) + 2 * vf ** 2 + 2 * vc ** 2 + a ** 2 * tc ** 2) ** 0.5 - vf - vc) / -a
+        if isinstance(tl, complex): tl = 100
+        return (ts, tl)
         
 
     def tick(self, time):
@@ -84,7 +102,7 @@ class Car:
         
         if tf > ce: # after acceleration period
             t = (tf - max(tc, ce))
-            dc = dc + t * v
+            dc, self.course = dc + t * v, None # course completed
         
         # update properties
         self.speed = v
