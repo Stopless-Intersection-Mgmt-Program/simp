@@ -1,5 +1,8 @@
 import math
 
+# THINGS TO FIX:
+# - green method needs a way to verify that car does not exceed turn speed
+
 class TrafficLight:
     def __init__(self):
         self.size = 40 # length (m) of one side of the intersection
@@ -35,8 +38,6 @@ class TrafficLight:
 
 
     def green(self, lane):
-        # UPDATE TO ENSURE PATH SPEED IS NOT EXCEDED
-
         # sets cars in lane to go and returns the time (s) when the last car clears the intersection
         if len(self.lanes[lane]) == 0: return 0 # no wait time if no cars in lane
         for i in range(len(self.lanes[lane])):

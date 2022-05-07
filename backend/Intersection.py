@@ -1,8 +1,13 @@
 import math
 
+# THINGS TO FIX:
+# - tick method needs a more permanent way of setting post-intersection course
+# - earliestArrival method should implement rangeTo
+# - car should not be allowed to pass through other cars on approach
+# - spawn method needs to be implemented
+
 class Intersection:
-    def __init__(self, algorithm):
-        self.algorithm = algorithm
+    def __init__(self):
         self.size = 40 # length (m) of one side of the intersection
         self.speed = 40 # speed (m/s) of cars entering and exiting the intersection
         self.buffer = 0 # gap (s) between cars travelling through intersection
@@ -35,7 +40,7 @@ class Intersection:
             a1, a2 = car1.acceleration, car2.acceleration
             time += (vt1 - vt2) / a2
             time -= ((self.speed ** 2 - vt2 ** 2) / (2 * a2) - (self.speed ** 2 - vt1 ** 2) / (2 * a1)) / (self.speed)
-        return time - d1 / vt1 # adjust time to edge of intersection
+        return time - d1 / vt1 + self.buffer # adjust time to edge of intersection and add buffer
 
 
     def turnSpeed(self, car):

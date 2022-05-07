@@ -1,5 +1,8 @@
 import math
 
+# THINGS TO FIX:
+# - setCourse should not result in courses that have the car backup, instead car should stop and wait
+
 class Car:
     def __init__(self, id, distance, path):
         self.id = id
