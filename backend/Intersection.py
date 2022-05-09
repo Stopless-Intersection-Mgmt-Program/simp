@@ -2,7 +2,7 @@ import math
 
 # THINGS TO FIX:
 # - tick method needs a more permanent way of setting post-intersection course
-# - earliestArrival method should implement rangeTo
+# - schedule method should implement rangeTo
 # - car should not be allowed to pass through other cars on approach
 # - spawn method needs to be implemented
 
