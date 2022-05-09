@@ -48,10 +48,10 @@ intersection = Intersection.Intersection()
 # intersection.schedule(car2)
 
 car0 = Car.Car(0, -200, (2, 2))
-car0.setCourse(0, 5, 30)
+car0.setCourse(0, 10, 30)
 print(car0.course)
 print(car0.timeTo(0))
-exit()
+intersection.cars.append(car0)
 
 
 # main loop
@@ -60,5 +60,6 @@ while True:
     intersection.tick(10)
     intersection.tkrender(canvas, 3)
     canvas.update()
+    print(car0.time, car0.distance, car0.speed)
     root.after(10)
 root.mainloop()

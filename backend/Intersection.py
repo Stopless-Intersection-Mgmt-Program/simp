@@ -113,6 +113,11 @@ class Intersection:
             car.tick(self.time) # tick each car
 
 
+    def render(self):
+        # returns list of car ids, coordinates, and directions
+        return [car.render(self.size) for car in self.cars]
+
+
     def tkrender(self, canvas, scale):
         # renders intersection and each car on canvas
         x0, y0 = int(canvas.cget("width")) / 2 + self.size / 2 * scale, int(canvas.cget("height")) / 2 - self.size / 2 * scale

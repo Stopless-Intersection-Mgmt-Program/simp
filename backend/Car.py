@@ -93,7 +93,6 @@ class Car:
                 tc, dc = tc + t, dc + t * v
 
             if tf >= cs and tc <= ce: # during acceleration period
-                print("accelerating cs, ce, tc:", cs, ce, tc)
                 t = (min(tf, ce) - max(tc, cs))
                 tc, dc, v = tc + t, dc + 0.5 * ca * t ** 2 + v * t, v + ca * t
         
@@ -102,7 +101,6 @@ class Car:
             dc, self.course = dc + t * v, [] # course completed
         
         # update properties
-        print(v, tf,)
         self.speed = v
         self.distance = dc
         self.time = tf # synchronize
@@ -137,17 +135,17 @@ class Car:
             else: x, y = size - r * math.cos(-angle), r * math.sin(-angle)
 
         # calculate absolute position
-        if li == 0: return y - size / 2, size - x - size / 2, angle
-        if li == 1: return size - x - size / 2, size - y - size / 2, angle - math.pi / 2
-        if li == 2: return size - y - size / 2, x - size / 2, angle + math.pi
-        if li == 3: return x - size / 2, y - size / 2, angle + math.pi / 2
+        if li == 0: return self.id, y - size / 2, size - x - size / 2, angle
+        if li == 1: return self.id, size - x - size / 2, size - y - size / 2, angle - math.pi / 2
+        if li == 2: return self.id, size - y - size / 2, x - size / 2, angle + math.pi
+        if li == 3: return self.id, x - size / 2, y - size / 2, angle + math.pi / 2
 
 
     def tkrender(self, size, canvas, scale):
         # draws and returns polygon on tkinter canvas in accordance to scale (pixels / m)
         ps = []
         l, w = 4, 2 # size of rectangle
-        x, y, angle = self.render(size)
+        id, x, y, angle = self.render(size)
         for sl, sw in [(1, 1), (-1, 1), (-1, -1), (1, -1)]:
             # generate base points
             bx, by = x + sl * l / 2, y + sw * w / 2
