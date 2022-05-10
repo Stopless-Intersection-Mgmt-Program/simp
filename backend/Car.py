@@ -34,39 +34,69 @@ class Car:
 
 
     def stop(self, distance):
-        # adds course so car stops at distance (m)
+        # sets course so car stops at distance (m)
         dc, df, tc, v = self.distance, distance, self.time, self.speed
         a, tf = v ** 2 / (-2 * (df - dc)), 2 * (df - dc) / v + tc
-        self.course.append((tc, tf, a))
+        self.course = [(tc, tf, a)]
 
 
     def go(self, speed, delay):
-        # adds course so car accelerates to speed (m/s) after delay (s)
+        # sets course so car accelerates to speed (m/s) after delay (s)
         tc, d, vc, vf, a = self.time, delay, self.speed, speed, self.acceleration
         tf = (vf - vc) / a + tc + d
-        self.course.append((tc + d, tf, a))
+        self.course = [(tc + d, tf, a)]
 
 
-    def timeTo(self, distance):
-        # returns time (s) when car will reach distance (m)
+    def accelerate(self, speed, time):
+        # adds course so car changes speed (m/s) at time (s)
+        ts, v, a = time, speed, self.acceleration
+        tf = v / a + ts
+        self.course.append((ts, tf, a))
+
+
+    def atDistance(self, distance):
+        # returns time (s) and speed (m/s) when car is at distance (m)
         dc, df, tc, v = self.distance, distance, self.time, self.speed
         if self.course == []: # no course
-            return (df - dc) / v
+            return (df - dc) / v, v
         for course in self.course: # loop through course nodes
             cs, ce, ca = course
 
             if tc < cs: # before acceleration period
                 t, d = cs - tc, v * (cs - tc) # relative time and distance
-                if dc + d > df: return tc + (df - dc) / v # will finish in this section
+                if dc + d > df: return tc + (df - dc) / v, v # will finish in this section
                 tc, dc = tc + t, dc + d
 
             if tc < ce: # during acceleration period
-                t, d = ce - tc, v * (ce - tc) - 0.5 * ca * (ce - tc) ** 2
-                if dc + d > df: return tc + ((2 * ca * (df - dc) + v ** 2) ** 0.5 - v) / ca
-                tc, dc, v = tc + t, dc + d, v - ca * t
+                t, d = ce - tc, 0.5 * ca * (ce - tc) ** 2 + v * (ce - tc)
+                if dc + d > df: return tc + ((2 * ca * (df - dc) + v ** 2) ** 0.5 - v) / ca, (v ** 2 + 2 * ca * (df - dc)) ** 0.5
+                tc, dc, v = tc + t, dc + d, v + ca * t
 
         if tc >= ce: # after acceleration period
             return tc + (df - dc) / v
+
+
+    def atTime(self, time):
+        # returns distance (m) and speed (m/s) of car at time (s)
+        dc, tc, tf, v = self.distance, self.time, time, self.speed
+        if self.course == []: # no course
+            return dc + (tf - tc) * v, v
+
+        for course in self.course: # loop through course nodes
+            cs, ce, ca = course
+
+            if tc < cs: # before acceleration period
+                t = (min(tf, cs) - tc) # relative time
+                tc, dc = tc + t, dc + t * v
+
+            if tf >= cs and tc <= ce: # during acceleration period
+                t = (min(tf, ce) - max(tc, cs))
+                tc, dc, v = tc + t, dc + 0.5 * ca * t ** 2 + v * t, v + ca * t
+        
+        if tf > ce: # after acceleration period
+            t = (tf - max(tc, ce))
+            dc = dc + t * v
+        return dc, v
 
 
     def rangeTo(self, distance, speed):
@@ -79,33 +109,9 @@ class Car:
         
 
     def tick(self, time):
-        # increments distance to match new time (s)
-        dc, tc, tf, v = self.distance, self.time, time, self.speed
-        if self.course == []: # no course
-            self.distance = dc + (tf - tc) * v
-            self.time = tf
-            return
-        for course in self.course: # loop through course nodes
-            cs, ce, ca = course
-
-            if tc < cs: # before acceleration period
-                t = (min(tf, cs) - tc) # relative time
-                tc, dc = tc + t, dc + t * v
-
-            if tf >= cs and tc <= ce: # during acceleration period
-                print("accelerating cs, ce, tc:", cs, ce, tc)
-                t = (min(tf, ce) - max(tc, cs))
-                tc, dc, v = tc + t, dc + 0.5 * ca * t ** 2 + v * t, v + ca * t
-        
-        if tf > ce: # after acceleration period
-            t = (tf - max(tc, ce))
-            dc, self.course = dc + t * v, [] # course completed
-        
-        # update properties
-        print(v, tf,)
-        self.speed = v
-        self.distance = dc
-        self.time = tf # synchronize
+        # updates properties to match new time (s)
+        self.distance, self.speed = self.atTime(time)
+        self.time = time # synchronize
 
 
     def render(self, size):
@@ -137,17 +143,17 @@ class Car:
             else: x, y = size - r * math.cos(-angle), r * math.sin(-angle)
 
         # calculate absolute position
-        if li == 0: return y - size / 2, size - x - size / 2, angle
-        if li == 1: return size - x - size / 2, size - y - size / 2, angle - math.pi / 2
-        if li == 2: return size - y - size / 2, x - size / 2, angle + math.pi
-        if li == 3: return x - size / 2, y - size / 2, angle + math.pi / 2
+        if li == 0: return self.id, y - size / 2, size - x - size / 2, angle
+        if li == 1: return self.id, size - x - size / 2, size - y - size / 2, angle - math.pi / 2
+        if li == 2: return self.id, size - y - size / 2, x - size / 2, angle + math.pi
+        if li == 3: return self.id, x - size / 2, y - size / 2, angle + math.pi / 2
 
 
     def tkrender(self, size, canvas, scale):
         # draws and returns polygon on tkinter canvas in accordance to scale (pixels / m)
         ps = []
         l, w = 4, 2 # size of rectangle
-        x, y, angle = self.render(size)
+        id, x, y, angle = self.render(size)
         for sl, sw in [(1, 1), (-1, 1), (-1, -1), (1, -1)]:
             # generate base points
             bx, by = x + sl * l / 2, y + sw * w / 2

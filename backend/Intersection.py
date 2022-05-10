@@ -1,7 +1,6 @@
 import math
 
 # THINGS TO FIX:
-# - tick method needs a more permanent way of setting post-intersection course
 # - schedule method should implement rangeTo
 # - car should not be allowed to pass through other cars on approach
 # - spawn method needs to be implemented
@@ -19,12 +18,15 @@ class Intersection:
     def schedule(self, car):
         # adds car for intersection to handle
         car.time = self.time # synchronize clocks
+        vt, dt = self.turnSpeed(car), self.turnLength(car.path)
 
         # loop through other cars and determine the overall earliest arrival time
         if len(self.cars) > 0: arrival = max(self.earliestArrival(car, c) for c in self.cars)
-        else: arrival = 2 * (0 - car.distance) / (car.speed + self.turnSpeed(car)) + self.time
-        car.setCourse(0, arrival, self.turnSpeed(car))
-        print(car.course)
+        else: arrival = 2 * (0 - car.distance) / (car.speed + vt) + self.time
+        car.setCourse(0, arrival, vt)
+
+        # set car to go once clear of intersection
+        car.accelerate(self.speed - vt, arrival + dt / vt)
 
         self.cars.append(car)
 
@@ -35,7 +37,7 @@ class Intersection:
         if overlap == None: return 2 * (0 - car1.distance) / (car1.speed + vt1) + self.time
 
         else: d1, d2 = overlap # if there is a critical section
-        time = car2.timeTo(d2) # time car2 will clear critical section
+        time = car2.atDistance(d2)[0] # time car2 will clear critical section
         if car1.path[1] == car2.path[1] and vt1 > vt2: # if cars are ending in the same lane and rear car is faster
             a1, a2 = car1.acceleration, car2.acceleration
             time += (vt1 - vt2) / a2
@@ -107,10 +109,12 @@ class Intersection:
     def tick(self, period):
         # ticks each car and increments the time for period (ms)
         self.time = self.time + period / 1000
-        for car in self.cars:
-            if car.course == None and car.distance < self.turnLength(car.path):
-                car.go(40, (self.turnLength(car.path) - car.distance) / car.speed)
-            car.tick(self.time) # tick each car
+        for car in self.cars: car.tick(self.time) # tick each car
+
+
+    def render(self):
+        # returns list of car ids, coordinates, and directions
+        return [car.render(self.size) for car in self.cars]
 
 
     def tkrender(self, canvas, scale):
