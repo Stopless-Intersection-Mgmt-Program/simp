@@ -1,25 +1,9 @@
 import '../css/App.css';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import DropDown from './dropdown';
 import { World, layoutMappings } from './worldComponents';
 import axios from 'axios';
 
-function stateToJSON(state) {
-  console.log("JSON transfer started with,", state)
-
-  axios
-    .post('http://localhost:3001/apiStartProcess', state)
-    .then((output) => console.log("JSON transferred to express:", output))
-
-}
-
-function pauseState(bool) {
-  console.log("Pause state initiated with bool", bool)
-  let pauseState = { state: { pause: bool } }
-  axios
-    .post('http://localhost:3001/apiPauseState', pauseState)
-    .then(() => console.log("Pause state sent"))
-}
 
 const App = () => {
   const vw = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0)
@@ -35,14 +19,46 @@ const App = () => {
   const [situationValue, setSituationValue] = useState('Any');
   const [intersectionValue, setIntersectionValue] = useState('4-Way Intersection');
   const [algorithmValue, setAlgorithmValue] = useState('First Come First Served');
-
-  const [criticalState, setCriticalState] = useState({
+  const [carArray, setCarArray] = useState([]);
+  let criticalState = {
     state:
     {
-      cars: ['NULL'],
-      intersection: [intersectionLength, layoutMappings[intersectionValue], algorithmValue, situationValue] //waiting for algorithmType to be saved currently 0
+      cars: carArray,
+      intersection: [93, layoutMappings[intersectionValue], algorithmValue, situationValue]
     }
-  })
+  }
+
+  const [returnState, setReturnState] = useState();
+
+  function stateToJSON(state) {
+    console.log("JSON transfer started with,", state)
+
+    axios
+      .post('http://localhost:3001/apiStartProcess', state)
+      .then((output) => setReturnState(output.data))
+
+  }
+
+  function pauseState(bool) {
+    console.log("Pause state initiated with bool", bool)
+    let pauseState = { state: { pause: bool } }
+    axios
+      .post('http://localhost:3001/apiPauseState', pauseState)
+      .then((output) => console.log("Pause state sent", output.data))
+  }
+
+  function restartState() {
+    axios
+      .post('http://localhost:3001/apiRestartState', true)
+  }
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (btnActive) { stateToJSON(criticalState) };
+    }, 10);
+    return () => clearInterval(interval);
+  }, [returnState, btnActive]);
+
 
   return (
     <>
@@ -60,7 +76,10 @@ const App = () => {
         worldWidth={600}
         worldHeight={600}
         intersectionType={intersectionValue}
-        algorithmType={algorithmValue} />
+        numCars={numCars}
+        btnActive={btnActive}
+        returnState={returnState}
+        setValueForParent={setCarArray} />
 
       {/* SettingsWrapper 
             Holds the dropdownComponent,
@@ -115,6 +134,12 @@ const App = () => {
           width="100%"
           onClick={(event) => { setBtnActive(!btnActive); btnActive ? pauseState(btnActive) : stateToJSON(criticalState) }}>
           {btnActive ? "Pause" : "Begin"}
+        </div>
+        <div
+          className='btn'
+          width="100%"
+          onClick={(event) => { restartState() }}>
+          Restart
         </div>
       </div>
     </>

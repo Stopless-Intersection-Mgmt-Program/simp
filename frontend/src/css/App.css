@@ -13,8 +13,9 @@ body {
 .car {
   margin: 0;
   position: absolute;
-  border-radius: 10px;
-  border: 1px solid #20464F;
+  border-radius: 2px;
+  z-index: 2;
+  border: 1px solid #FFFF;
 }
 
 .settingsWrapper {
