@@ -36,8 +36,8 @@ while True:
             if "cars" in dicIn:
                 cars = dicIn["cars"]
                 for car in cars:
-                    carNew = Car.car(car[0], xyToDist(intersectionProps[0], car[1], car[2], car[3], intersectionProps[1]), (car[3], car[4])) # ipc format need transfer xy to dist
-                    # carNew = Car.Car(car[0], car[1], (car[2], car[3]))
+                    # carNew = Car.car(car[0], xyToDist(intersectionProps[0], car[1], car[2], car[3], intersectionProps[1]), (car[3], car[4])) # ipc format need transfer xy to dist
+                    carNew = Car.Car(car[0], -200, (car[3], car[4]))
                     intersection.schedule(carNew)
             
             if "pause" in dicIn:
@@ -54,7 +54,7 @@ while True:
                         else: stop.append(i)
                     dicOut = {"cars" : intersection.render(), "statistics": [], "intersection": [stop, clear]}
                 else:
-                    dicOut = {"cars" : intersection.render(), "statistics": []} # do it need car's speed here? (ipc format)
+                    dicOut = {"cars" : intersection.render(), "statistics": []} 
                 print(json.dumps(dicOut))
 
         print("Done", file=sys.stdout, flush=True)
