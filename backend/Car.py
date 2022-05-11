@@ -1,8 +1,5 @@
 import math
 
-# THINGS TO FIX:
-# - setCourse should not result in courses that have the car backup, instead car should stop and wait
-
 class Car:
     def __init__(self, id, distance, path):
         self.id = id
@@ -22,36 +19,22 @@ class Car:
         if vf == vc: # no change in speed
             a = 4 * ((df - dc) - (tf - tc) * vf) / (tf - tc) ** 2
             t = (tf + tc) / 2
+            ts = tc + t
 
         else: # change in speed
             sign = 1 if (vf + vc) / 2 * (tf - tc) < df - dc else -1 # determine sign of radical
             rad = sign * (2 * (2 * (df ** 2 + ((tc - tf) * (vf + vc) - 2 * dc) * df + (tf - tc) * (vf + vc) * dc + dc ** 2) + (tf ** 2 - 2 * tc * tf + tc ** 2) * (vf ** 2 + vc ** 2))) ** 0.5
             a = (rad + 2 * df - 2 * dc + (tc - tf) * (vf + vc)) / (tf ** 2 - 2 * tc * tf + tc ** 2)
             t = (rad - 2 * df + 2 * dc + (2 * tf - 2 * tc) * vf) / (2 * vf - 2 * vc)
+            ts = tc + t
         
+        if vc + a * t < 0: # check if backing up
+            a = (vf ** 2 + vc ** 2) / (2 * (dc - df))
+            t = (0 - vc) / a
+            ts = tf + vf / a
+
         # assign course
-        self.course = [(tc, tc + t, a), (tc + t, tf, -a)]
-
-
-    def stop(self, distance):
-        # sets course so car stops at distance (m)
-        dc, df, tc, v = self.distance, distance, self.time, self.speed
-        a, tf = v ** 2 / (-2 * (df - dc)), 2 * (df - dc) / v + tc
-        self.course = [(tc, tf, a)]
-
-
-    def go(self, speed, delay):
-        # sets course so car accelerates to speed (m/s) after delay (s)
-        tc, d, vc, vf, a = self.time, delay, self.speed, speed, self.acceleration
-        tf = (vf - vc) / a + tc + d
-        self.course = [(tc + d, tf, a)]
-
-
-    def accelerate(self, speed, time):
-        # adds course so car changes speed (m/s) at time (s)
-        ts, v, a = time, speed, self.acceleration
-        tf = v / a + ts
-        self.course.append((ts, tf, a))
+        self.course = [(tc, tc + t, a), (ts, tf, -a)]
 
 
     def atDistance(self, distance):
@@ -73,7 +56,7 @@ class Car:
                 tc, dc, v = tc + t, dc + d, v + ca * t
 
         if tc >= ce: # after acceleration period
-            return tc + (df - dc) / v
+            return tc + (df - dc) / v, v
 
 
     def atTime(self, time):
@@ -143,17 +126,18 @@ class Car:
             else: x, y = size - r * math.cos(-angle), r * math.sin(-angle)
 
         # calculate absolute position
-        if li == 0: return self.id, y - size / 2, size - x - size / 2, angle
-        if li == 1: return self.id, size - x - size / 2, size - y - size / 2, angle - math.pi / 2
-        if li == 2: return self.id, size - y - size / 2, x - size / 2, angle + math.pi
-        if li == 3: return self.id, x - size / 2, y - size / 2, angle + math.pi / 2
+        if li == 0: x, y, angle = y - size / 2, size - x - size / 2, angle
+        if li == 1: x, y, angle = size - x - size / 2, size - y - size / 2, angle - math.pi / 2
+        if li == 2: x, y, angle = size - y - size / 2, x - size / 2, angle + math.pi
+        if li == 3: x, y, angle = x - size / 2, y - size / 2, angle + math.pi / 2
+        return self.id, x, y, angle, self.speed
 
 
     def tkrender(self, size, canvas, scale):
         # draws and returns polygon on tkinter canvas in accordance to scale (pixels / m)
         ps = []
         l, w = 4, 2 # size of rectangle
-        id, x, y, angle = self.render(size)
+        id, x, y, angle, v = self.render(size)
         for sl, sw in [(1, 1), (-1, 1), (-1, -1), (1, -1)]:
             # generate base points
             bx, by = x + sl * l / 2, y + sw * w / 2
