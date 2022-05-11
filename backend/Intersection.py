@@ -25,8 +25,8 @@ class Intersection:
         else: arrival = 2 * (0 - car.distance) / (car.speed + vt) + self.time
         car.setCourse(0, arrival, vt)
 
-        # set car to go once clear of intersection
-        car.accelerate(self.speed - vt, arrival + dt / vt)
+        # set car to accelerate to intersection speed once clear of intersection
+        car.course.append((arrival + dt / vt, (self.speed - vt) / car.acceleration + arrival + dt / vt, car.acceleration))
 
         self.cars.append(car)
 

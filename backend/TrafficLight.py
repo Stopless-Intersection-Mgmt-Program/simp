@@ -22,7 +22,7 @@ class TrafficLight:
         li, lo = car.path
         if (lo - li) % 4 < 2: lane = li * 2 + 1 # left turn lane
         else: lane = li * 2
-        car.stop(-4 - 8 * len(self.lanes[lane])) # stop car
+        stop(car, -4 - 8 * len(self.lanes[lane])) # stop car
         self.lanes[lane].append(car)
 
 
@@ -44,9 +44,9 @@ class TrafficLight:
             car = self.lanes[lane].pop(0)
             t = (40 - car.speed) / car.acceleration + self.time # time car will reach final speed
             delay = 0 if i == 0 else max(i * 0.5, tp - t) # set delay to avoid hitting previous car
-            car.go(40, delay)
+            go(car, 40, delay)
             tp = t + delay
-        return car.timeTo(60) # a distance of 60 will clear any other cars
+        return car.atDistance(60)[0] # a distance of 60 will clear any other cars
 
 
     def tick(self, period):
@@ -64,3 +64,19 @@ class TrafficLight:
         canvas.create_rectangle(x0, y0, x1, y1, fill="", width=2, outline="grey12")
 
         for car in self.cars: car.tkrender(self.size, canvas, scale) # render each car
+
+
+
+# Additional Car Methods
+def stop(car, distance):
+    # sets course so car stops at distance (m)
+    dc, df, tc, v = car.distance, distance, car.time, car.speed
+    a, tf = v ** 2 / (-2 * (df - dc)), 2 * (df - dc) / v + tc
+    car.course = [(tc, tf, a)]
+
+
+def go(car, speed, delay):
+    # sets course so car accelerates to speed (m/s) after delay (s)
+    tc, d, vc, vf, a = car.time, delay, car.speed, speed, car.acceleration
+    tf = (vf - vc) / a + tc + d
+    car.course = [(tc + d, tf, a)]
