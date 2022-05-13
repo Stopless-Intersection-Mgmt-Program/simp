@@ -15,26 +15,45 @@ class Car:
 
     def setCourse(self, distance, time, speed):
         # sets course to reach distance (m) at time (s) with speed (m/s)
-        dc, df, tc, tf, vc, vf = self.distance, distance, self.time, time, self.speed, speed
-        if vf == vc: # no change in speed
-            a = 4 * ((df - dc) - (tf - tc) * vf) / (tf - tc) ** 2
-            t = (tf + tc) / 2
-            ts = tc + t
+        dc, df, tc, tf, vc, vf, a = self.distance, distance, self.time, time, self.speed, speed, self.acceleration
+        ranges = self.courseRanges(df, vf)
 
-        else: # change in speed
-            sign = 1 if (vf + vc) / 2 * (tf - tc) < df - dc else -1 # determine sign of radical
-            rad = sign * (2 * (2 * (df ** 2 + ((tc - tf) * (vf + vc) - 2 * dc) * df + (tf - tc) * (vf + vc) * dc + dc ** 2) + (tf ** 2 - 2 * tc * tf + tc ** 2) * (vf ** 2 + vc ** 2))) ** 0.5
-            a = (rad + 2 * df - 2 * dc + (tc - tf) * (vf + vc)) / (tf ** 2 - 2 * tc * tf + tc ** 2)
-            t = (rad - 2 * df + 2 * dc + (2 * tf - 2 * tc) * vf) / (2 * vf - 2 * vc)
-            ts = tc + t
-        
-        if vc + a * t < 0: # check if backing up
-            a = (vf ** 2 + vc ** 2) / (2 * (dc - df))
-            t = (0 - vc) / a
-            ts = tf + vf / a
+        # check if in ++ or -- course range
+        if tf >= ranges[1] and tf <= ranges[2]:
+            if vf < vc: a = -a
+            t = (vf ** 2 - 2 * vc * vf + vc ** 2 + 2 * a * (tf - tc) * vc - 2 * a * (df - dc)) / (2 * a * ((vf - vc) - a * (tf - tc)))
+            self.course = [(tc, tc + t, a), (tf - ((vf - vc) / a - t), tf, a)]
 
-        # assign course
-        self.course = [(tc, tc + t, a), (ts, tf, -a)]
+        # check if in +- or -+ course range
+        elif tf >= ranges[0] and tf <= ranges[3]:
+            if tf >= ranges[2]: a = -a
+            t = (math.copysign(1, -a) * (2 * (vc + a * (tf - tc)) * vf - vf ** 2 + 2 * a * (tf - tc) * vc - vc ** 2 + a ** 2 * (tf ** 2 - 2 * tc * tf + tc ** 2) - 4 * a * (df - dc)) ** 0.5 + (vf - vc) + a * (tf - tc)) / (2 * a)
+            self.course = [(tc, tc + t, a), (tf - ((vc - vf) / a + t), tf, -a)]
+
+
+    def courseRanges(self, distance, speed):
+        # returns array of times (s) that car could arrive at distance (m) with speed (m/s) for each course
+        dc, df, tc, vc, vf, a = self.distance, distance, self.time, self.speed, speed, self.acceleration
+        vl, vh, ranges = min(vf, vc), max(vf, vc), []
+
+        # time range for +- course
+        ts = ((2 * (vf ** 2 + vc ** 2 + 2 * a * (df - dc))) ** 0.5 - vf - vc + a * tc) / a
+        tl = (vl ** 2 - 2 * vh * vl + vh ** 2 + 2 * a * tc * vh + 2 * a * (df - dc)) / (2 * a * vh)
+        ranges += [ts, tl]
+
+        a = -a # switch acceleration sign
+
+        # time range for -+ course
+        ts = (vh ** 2 - 2 * vl * vh + vl ** 2 + 2 * a * tc * vl + 2 * a * (df - dc)) / (2 * a * vl)
+        tl = ((2 * (vf ** 2 + vc ** 2 + 2 * a * (df - dc))) ** 0.5 - vf - vc + a * tc) / a     
+        ranges += [ts, float('inf') if isinstance(tl, complex) else tl]
+        return ranges
+
+
+    def rangeTo(self, distance, speed):
+        # returns interval of times (s) that car could arrive at distance (m) with speed (m/s)
+        ranges = self.courseRanges(distance, speed)
+        return ranges[0], ranges[3]
 
 
     def atDistance(self, distance):
@@ -80,15 +99,6 @@ class Car:
             t = (tf - max(tc, ce))
             dc = dc + t * v
         return dc, v
-
-
-    def rangeTo(self, distance, speed):
-        # returns interval of times (s) that car could arrive at distance (m) with speed (m/s)
-        dc, df, tc, vc, vf, a = self.distance, distance, self.time, self.speed, speed, self.acceleration
-        ts = ((4 * a * (df - dc) + 2 * vf ** 2 + 2 * vc ** 2 - a ** 2 * tc ** 2) ** 0.5 - vf - vc) / a
-        tl = ((4 * a * (dc - df) + 2 * vf ** 2 + 2 * vc ** 2 + a ** 2 * tc ** 2) ** 0.5 - vf - vc) / -a
-        if isinstance(tl, complex): tl = 100
-        return (ts, tl)
         
 
     def tick(self, time):
