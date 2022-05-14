@@ -4,12 +4,12 @@ class Car:
     def __init__(self, id, distance, path):
         self.id = id
         self.path = path # tuple containing starting lane and ending lane
-        self.acceleration = 5 # acceleration (m/s/s) of car relative to path
+        self.acceleration = 3 # acceleration (m/s/s) of car relative to path
         self.turning = 1 # coefficient of turning (1/s)
 
         self.time = 0 # time (s) used by intersection to synchronize behavior
         self.distance = distance # distance (m) relative to the enterance of the intersection (negative means approaching intersection)
-        self.speed = 40 # speed (m/s) of car relative to path
+        self.speed = 30 # speed (m/s) of car relative to path
         self.course = [] # list of tuples containing a start time, end time, and acceleration
 
 
@@ -101,10 +101,10 @@ class Car:
         return dc, v
         
 
-    def tick(self, time):
-        # updates properties to match new time (s)
-        self.distance, self.speed = self.atTime(time)
-        self.time = time # synchronize
+    def tick(self, period):
+        # updates properties based on period (ms)
+        self.distance, self.speed = self.atTime(self.time + period / 1000)
+        self.time = self.time + period / 1000 # synchronize
 
 
     def render(self, size):

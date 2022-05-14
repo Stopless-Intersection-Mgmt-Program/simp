@@ -1,18 +1,25 @@
 import math
+import random
+import Car
 
 # THINGS TO FIX:
 # - schedule method should implement rangeTo
 # - car should not be allowed to pass through other cars on approach
-# - spawn method needs to be implemented
 
 class Intersection:
-    def __init__(self):
+    def __init__(self, spawn = False):
         self.size = 40 # length (m) of one side of the intersection
-        self.speed = 40 # speed (m/s) of cars entering and exiting the intersection
-        self.buffer = 0 # gap (s) between cars travelling through intersection
+        self.speed = 30 # speed (m/s) of cars entering and exiting the intersection
+        self.distance = -300 # distance (m) at which cars get scheduled, based on acceleration and speed
+        self.buffer = 0 # gap (s) added between cars travelling through intersection
 
         self.time = 0 # clock to track time (s) elapsed
         self.cars = [] # list of cars monitored by the intersection
+
+        self.spawn = spawn # boolean of whether spawner is active
+        random.seed(0) # for consistency seed the spawner
+        self.id = 0 # id counter for spawner
+        self.cooldown = [0, 0, 0, 0, 0, 0, 0, 0] # spawner cooldown for each of the 8 lanes
 
 
     def schedule(self, car):
@@ -21,6 +28,7 @@ class Intersection:
         vt, dt = self.turnSpeed(car), self.turnLength(car.path)
 
         # loop through other cars and determine the overall earliest arrival time
+        # if c.course[-1][1] < self.time
         if len(self.cars) > 0: arrival = max(self.earliestArrival(car, c) for c in self.cars)
         else: arrival = 2 * (0 - car.distance) / (car.speed + vt) + self.time
         car.setCourse(0, arrival, vt)
@@ -101,15 +109,31 @@ class Intersection:
         return cs[0] * self.turnLength(path1), cs[1] * self.turnLength(path2)
 
 
-    def spawn(self, distribution):
-        # given an array of distributions for the 4 turns, randomly spawns cars and schedules them
-        return # to be implemented
+    def spawner(self, period):
+        # based on the array of distributions for the 4 turns, randomly spawns cars and schedules them
+        for lane in range(8): # loop through each lane
+            if self.cooldown[lane] != 0: continue # check if there is a cooldown still in effect
+            if random.random() > (period / 10000): continue # on average should spawn one car every 10 seconds per lane
+            if lane % 2 == 1: # left turn lane
+                if random.random() > 0.1: path = (lane // 2, (lane // 2 + 1) % 4) # 90% chance of left turn
+                else: path = (lane // 2, lane // 2) # 10% chance of U turn
+            else:
+                if random.random() > 0.2: path = (lane // 2, (lane // 2 + 2) % 4) # 80% chance of straight
+                else: path = (lane // 2, (lane // 2 + 3) % 4) # 20% chance of right turn
+            self.schedule(Car.Car(self.id, self.distance, path))
+            self.cooldown[lane] = 10 / self.speed + self.buffer # set cooldown for lane
 
 
     def tick(self, period):
-        # ticks each car and increments the time for period (ms)
+        # updates properties based on period (ms)
         self.time = self.time + period / 1000
-        for car in self.cars: car.tick(self.time) # tick each car
+        for car in self.cars:
+            car.tick(period) # tick each car
+            if car.distance > -self.distance: self.cars.remove(car) # remove cars that have cleared the intersection
+
+        if not self.spawn: return # check if spawner is active
+        self.spawner(period)
+        self.cooldown = [t - period if t > 0 else 0 for t in self.cooldown]
 
 
     def render(self):
