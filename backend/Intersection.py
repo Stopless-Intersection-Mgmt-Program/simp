@@ -22,35 +22,41 @@ class Intersection:
         car.time = self.time # synchronize clocks
         vt, dt = self.turnSpeed(car), self.turnLength(car.path)
 
-        # loop through other cars and determine the overall earliest arrival time
-        # if c.course[-1][1] < self.time
-        if len(self.cars) > 0: arrival = max(self.earliestArrival(car, c) for c in self.cars)
-        else: arrival = 2 * (0 - car.distance) / (car.speed + vt) + self.time
-        car.setCourse(0, arrival, vt)
+        # loop through other cars and set car to arrive after each
+        car.setCourse(0, 0, vt)
+        for other in self.cars: self.arriveAfter(car, other)
 
         # set car to accelerate to intersection speed once clear of intersection
-        car.course.append((arrival + dt / vt, (self.speed - vt) / car.acceleration + arrival + dt / vt, car.acceleration))
+        tf = car.atDistance(dt)[0]
+        car.course.append((tf, (self.speed - vt) / car.acceleration + tf, car.acceleration))
+
         print("Set course:", car.path, car.course)
         self.cars.append(car)
 
 
-    def earliestArrival(self, car1, car2):
-        # returns earliest time (s) car1 can arrive at the intersection without colliding with car2
+    def arriveAfter(self, car1, car2):
+        # sets car1 to arrive at the intersection after car2
         overlap, vt1, vt2 = self.overlap(car1.path, car2.path), self.turnSpeed(car1), self.turnSpeed(car2)
         (li1, lo1), (li2, lo2) = self.turnLanes(car1.path), self.turnLanes(car2.path)
-        if overlap == None: return 2 * (0 - car1.distance) / (car1.speed + vt1) + self.time
+        if overlap == None or car2.course[-1][1] < self.time: return # no overlap or car2 has already completed its course
 
         else: (d1, d2), ta = overlap, 0 # if there is a critical section
-        if car2.distance < d2: ta = car2.atDistance(d2)[0] # time car2 will clear critical section if it has not yet
+        if car2.distance < d2: # if car2 has not yet cleared the critical section
+            ta = car2.atDistance(d2)[0] - d1 / vt1
+            if ta > car1.atDistance(0)[0]: car1.setCourse(0, ta + self.buffer, vt1)
 
-        if li1 == li2 and vt1 < vt2: # if cars are starting in the same lane and rear car is slower
-            vi, a1, a2 = car2.atTime(car2.course[0][1])[1], car1.acceleration, car2.acceleration
-            ta = car2.course[1][1] - ((a2 - a1) * vi ** 2 + 2 * (a1 * vt2 - a2 * vt1) * vi - a1 * vt2 ** 2 + a2 * vt1 ** 2) / (2 * a1 * a2 * vi)            
+        if li1 == li2 and vt1 < vt2: # if car2 starts in the same lane and car1 is slower
+            a1, a2 = car1.acceleration, car2.acceleration
+            tm = car2.course[1][1] + (((a1 * vt2 ** 2 + a2 * vt1 ** 2) / (a1 + a2)) ** 0.5 - vt2) / a2
+            tm, (dm, vm) = tm + d2 / vt2, car2.atTime(tm)
+            if car1.atTime(tm)[0] > dm:
+                car1.setCourse(dm, tm + self.buffer, vm)
+                car1.course.append((tm + self.buffer, (vm - vt1) / a1 + tm, -a1))
 
-        if lo1 == lo2 and vt1 > vt2: # if cars are ending in the same lane and rear car is faster
+        if lo1 == lo2 and vt1 > vt2: # if car2 ends in the same lane and car1 is faster
             vf, a1, a2 = self.speed, car1.acceleration, car2.acceleration
-            ta = car2.course[-1][0] + (vt1 - vt2) / a2 - ((vf ** 2 - vt2 ** 2) / (2 * a2) - (vf ** 2 - vt1 ** 2) / (2 * a1)) / vf
-        return ta - d1 / vt1 + self.buffer # adjust time to edge of intersection and add buffer
+            ta = car2.course[-1][0] + (vt1 - vt2) / a2 - ((vf ** 2 - vt2 ** 2) / (2 * a2) - (vf ** 2 - vt1 ** 2) / (2 * a1)) / vf - d1 / vt1
+            if ta > car1.atDistance(0)[0]: car1.setCourse(0, ta + self.buffer, vt1)
 
 
     def turnLanes(self, path):
