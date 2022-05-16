@@ -1,7 +1,7 @@
 import math
 
 class Car:
-    def __init__(self, id, distance, path):
+    def __init__(self, id, distance, speed, path):
         self.id = id
         self.path = path # tuple containing starting lane and ending lane
         self.acceleration = 3 # acceleration (m/s/s) of car relative to path
@@ -9,7 +9,7 @@ class Car:
 
         self.time = 0 # time (s) used by intersection to synchronize behavior
         self.distance = distance # distance (m) relative to the enterance of the intersection (negative means approaching intersection)
-        self.speed = 30 # speed (m/s) of car relative to path
+        self.speed = speed # speed (m/s) of car relative to path
         self.course = [] # list of tuples containing a start time, end time, and acceleration
 
 
@@ -17,6 +17,7 @@ class Car:
         # sets course to reach distance (m) at time (s) with speed (m/s)
         dc, df, tc, tf, vc, vf, a = self.distance, distance, self.time, time, self.speed, speed, self.acceleration
         ranges = self.courseRanges(df, vf)
+        if tf < ranges[0]: tf = ranges[0]
 
         # check if in ++ or -- course range
         if tf >= ranges[1] and tf <= ranges[2]:
@@ -39,14 +40,14 @@ class Car:
         # time range for +- course
         ts = ((2 * (vf ** 2 + vc ** 2 + 2 * a * (df - dc))) ** 0.5 - vf - vc + a * tc) / a
         tl = (vl ** 2 - 2 * vh * vl + vh ** 2 + 2 * a * tc * vh + 2 * a * (df - dc)) / (2 * a * vh)
-        ranges += [ts, tl]
+        ranges += [ts + 0.0000001, tl]
 
         a = -a # switch acceleration sign
 
         # time range for -+ course
         ts = (vh ** 2 - 2 * vl * vh + vl ** 2 + 2 * a * tc * vl + 2 * a * (df - dc)) / (2 * a * vl)
         tl = ((2 * (vf ** 2 + vc ** 2 + 2 * a * (df - dc))) ** 0.5 - vf - vc + a * tc) / a     
-        ranges += [ts, float('inf') if isinstance(tl, complex) else tl]
+        ranges += [ts, float('inf') if isinstance(tl, complex) else tl + 0.0000001]
         return ranges
 
 
@@ -83,7 +84,6 @@ class Car:
         dc, tc, tf, v = self.distance, self.time, time, self.speed
         if self.course == []: # no course
             return dc + (tf - tc) * v, v
-
         for course in self.course: # loop through course nodes
             cs, ce, ca = course
 
@@ -104,13 +104,13 @@ class Car:
     def tick(self, period):
         # updates properties based on period (ms)
         self.distance, self.speed = self.atTime(self.time + period / 1000)
-        self.time = self.time + period / 1000 # synchronize
+        self.time += period / 1000
 
 
     def render(self, size):
         # returns coordinates (m) and angle (rad) realtive to center based on path and distance
-        dc, (li, lo) = self.distance, self.path
-        turn = (lo - li) % 4 # calculate the modulo difference
+        dc, (di, do) = self.distance, self.path
+        turn = (do - di) % 4 # calculate the modulo difference
 
         # calculate relative to the bottom left of starting lane
         if dc <= 0 or turn == 2: # if car is before intersection or going straight
@@ -136,18 +136,18 @@ class Car:
             else: x, y = size - r * math.cos(-angle), r * math.sin(-angle)
 
         # calculate absolute position
-        if li == 0: x, y, angle = y - size / 2, size - x - size / 2, angle
-        if li == 1: x, y, angle = size - x - size / 2, size - y - size / 2, angle - math.pi / 2
-        if li == 2: x, y, angle = size - y - size / 2, x - size / 2, angle + math.pi
-        if li == 3: x, y, angle = x - size / 2, y - size / 2, angle + math.pi / 2
-        return self.id, x, y, angle, self.speed
+        if di == 0: x, y, angle = y - size / 2, size - x - size / 2, angle
+        if di == 1: x, y, angle = size - x - size / 2, size - y - size / 2, angle - math.pi / 2
+        if di == 2: x, y, angle = size - y - size / 2, x - size / 2, angle + math.pi
+        if di == 3: x, y, angle = x - size / 2, y - size / 2, angle + math.pi / 2
+        return x, y, angle
 
 
     def tkrender(self, size, canvas, scale):
         # draws and returns polygon on tkinter canvas in accordance to scale (pixels / m)
         ps = []
         l, w = 4, 2 # size of rectangle
-        id, x, y, angle, v = self.render(size)
+        x, y, angle = self.render(size)
         for sl, sw in [(1, 1), (-1, 1), (-1, -1), (1, -1)]:
             # generate base points
             bx, by = x + sl * l / 2, y + sw * w / 2
