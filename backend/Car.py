@@ -1,40 +1,60 @@
 import math
 
 class Car:
-    def __init__(self, id, distance, path):
+    def __init__(self, id, distance, speed, path):
         self.id = id
         self.path = path # tuple containing starting lane and ending lane
-        self.acceleration = 5 # acceleration (m/s/s) of car relative to path
+        self.acceleration = 3 # acceleration (m/s/s) of car relative to path
         self.turning = 1 # coefficient of turning (1/s)
 
         self.time = 0 # time (s) used by intersection to synchronize behavior
         self.distance = distance # distance (m) relative to the enterance of the intersection (negative means approaching intersection)
-        self.speed = 40 # speed (m/s) of car relative to path
+        self.speed = speed # speed (m/s) of car relative to path
         self.course = [] # list of tuples containing a start time, end time, and acceleration
 
 
     def setCourse(self, distance, time, speed):
         # sets course to reach distance (m) at time (s) with speed (m/s)
-        dc, df, tc, tf, vc, vf = self.distance, distance, self.time, time, self.speed, speed
-        if vf == vc: # no change in speed
-            a = 4 * ((df - dc) - (tf - tc) * vf) / (tf - tc) ** 2
-            t = (tf + tc) / 2
-            ts = tc + t
+        dc, df, tc, tf, vc, vf, a = self.distance, distance, self.time, time, self.speed, speed, self.acceleration
+        ranges = self.courseRanges(df, vf)
+        if tf < ranges[0]: tf = ranges[0]
 
-        else: # change in speed
-            sign = 1 if (vf + vc) / 2 * (tf - tc) < df - dc else -1 # determine sign of radical
-            rad = sign * (2 * (2 * (df ** 2 + ((tc - tf) * (vf + vc) - 2 * dc) * df + (tf - tc) * (vf + vc) * dc + dc ** 2) + (tf ** 2 - 2 * tc * tf + tc ** 2) * (vf ** 2 + vc ** 2))) ** 0.5
-            a = (rad + 2 * df - 2 * dc + (tc - tf) * (vf + vc)) / (tf ** 2 - 2 * tc * tf + tc ** 2)
-            t = (rad - 2 * df + 2 * dc + (2 * tf - 2 * tc) * vf) / (2 * vf - 2 * vc)
-            ts = tc + t
-        
-        if vc + a * t < 0: # check if backing up
-            a = (vf ** 2 + vc ** 2) / (2 * (dc - df))
-            t = (0 - vc) / a
-            ts = tf + vf / a
+        # check if in ++ or -- course range
+        if tf >= ranges[1] and tf <= ranges[2]:
+            if vf < vc: a = -a
+            t = (vf ** 2 - 2 * vc * vf + vc ** 2 + 2 * a * (tf - tc) * vc - 2 * a * (df - dc)) / (2 * a * ((vf - vc) - a * (tf - tc)))
+            self.course = [(tc, tc + t, a), (tf - ((vf - vc) / a - t), tf, a)]
 
-        # assign course
-        self.course = [(tc, tc + t, a), (ts, tf, -a)]
+        # check if in +- or -+ course range
+        elif tf >= ranges[0] and tf <= ranges[3]:
+            if tf >= ranges[2]: a = -a
+            t = (math.copysign(1, -a) * (2 * (vc + a * (tf - tc)) * vf - vf ** 2 + 2 * a * (tf - tc) * vc - vc ** 2 + a ** 2 * (tf ** 2 - 2 * tc * tf + tc ** 2) - 4 * a * (df - dc)) ** 0.5 + (vf - vc) + a * (tf - tc)) / (2 * a)
+            self.course = [(tc, tc + t, a), (tf - ((vc - vf) / a + t), tf, -a)]
+
+
+    def courseRanges(self, distance, speed):
+        # returns array of times (s) that car could arrive at distance (m) with speed (m/s) for each course
+        dc, df, tc, vc, vf, a = self.distance, distance, self.time, self.speed, speed, self.acceleration
+        vl, vh, ranges = min(vf, vc), max(vf, vc), []
+
+        # time range for +- course
+        ts = ((2 * (vf ** 2 + vc ** 2 + 2 * a * (df - dc))) ** 0.5 - vf - vc + a * tc) / a
+        tl = (vl ** 2 - 2 * vh * vl + vh ** 2 + 2 * a * tc * vh + 2 * a * (df - dc)) / (2 * a * vh)
+        ranges += [ts + 0.0000001, tl]
+
+        a = -a # switch acceleration sign
+
+        # time range for -+ course
+        ts = (vh ** 2 - 2 * vl * vh + vl ** 2 + 2 * a * tc * vl + 2 * a * (df - dc)) / (2 * a * vl)
+        tl = ((2 * (vf ** 2 + vc ** 2 + 2 * a * (df - dc))) ** 0.5 - vf - vc + a * tc) / a     
+        ranges += [ts, float('inf') if isinstance(tl, complex) else tl + 0.0000001]
+        return ranges
+
+
+    def rangeTo(self, distance, speed):
+        # returns interval of times (s) that car could arrive at distance (m) with speed (m/s)
+        ranges = self.courseRanges(distance, speed)
+        return ranges[0], ranges[3]
 
 
     def atDistance(self, distance):
@@ -64,7 +84,6 @@ class Car:
         dc, tc, tf, v = self.distance, self.time, time, self.speed
         if self.course == []: # no course
             return dc + (tf - tc) * v, v
-
         for course in self.course: # loop through course nodes
             cs, ce, ca = course
 
@@ -80,27 +99,18 @@ class Car:
             t = (tf - max(tc, ce))
             dc = dc + t * v
         return dc, v
-
-
-    def rangeTo(self, distance, speed):
-        # returns interval of times (s) that car could arrive at distance (m) with speed (m/s)
-        dc, df, tc, vc, vf, a = self.distance, distance, self.time, self.speed, speed, self.acceleration
-        ts = ((4 * a * (df - dc) + 2 * vf ** 2 + 2 * vc ** 2 - a ** 2 * tc ** 2) ** 0.5 - vf - vc) / a
-        tl = ((4 * a * (dc - df) + 2 * vf ** 2 + 2 * vc ** 2 + a ** 2 * tc ** 2) ** 0.5 - vf - vc) / -a
-        if isinstance(tl, complex): tl = 100
-        return (ts, tl)
         
 
-    def tick(self, time):
-        # updates properties to match new time (s)
-        self.distance, self.speed = self.atTime(time)
-        self.time = time # synchronize
+    def tick(self, period):
+        # updates properties based on period (ms)
+        self.distance, self.speed = self.atTime(self.time + period / 1000)
+        self.time += period / 1000
 
 
     def render(self, size):
         # returns coordinates (m) and angle (rad) realtive to center based on path and distance
-        dc, (li, lo) = self.distance, self.path
-        turn = (lo - li) % 4 # calculate the modulo difference
+        dc, (di, do) = self.distance, self.path
+        turn = (do - di) % 4 # calculate the modulo difference
 
         # calculate relative to the bottom left of starting lane
         if dc <= 0 or turn == 2: # if car is before intersection or going straight
@@ -126,18 +136,18 @@ class Car:
             else: x, y = size - r * math.cos(-angle), r * math.sin(-angle)
 
         # calculate absolute position
-        if li == 0: x, y, angle = y - size / 2, size - x - size / 2, angle
-        if li == 1: x, y, angle = size - x - size / 2, size - y - size / 2, angle - math.pi / 2
-        if li == 2: x, y, angle = size - y - size / 2, x - size / 2, angle + math.pi
-        if li == 3: x, y, angle = x - size / 2, y - size / 2, angle + math.pi / 2
-        return self.id, x, y, angle, self.speed
+        if di == 0: x, y, angle = y - size / 2, size - x - size / 2, angle
+        if di == 1: x, y, angle = size - x - size / 2, size - y - size / 2, angle - math.pi / 2
+        if di == 2: x, y, angle = size - y - size / 2, x - size / 2, angle + math.pi
+        if di == 3: x, y, angle = x - size / 2, y - size / 2, angle + math.pi / 2
+        return x, y, angle
 
 
     def tkrender(self, size, canvas, scale):
         # draws and returns polygon on tkinter canvas in accordance to scale (pixels / m)
         ps = []
         l, w = 4, 2 # size of rectangle
-        id, x, y, angle, v = self.render(size)
+        x, y, angle = self.render(size)
         for sl, sw in [(1, 1), (-1, 1), (-1, -1), (1, -1)]:
             # generate base points
             bx, by = x + sl * l / 2, y + sw * w / 2
