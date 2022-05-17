@@ -140,7 +140,7 @@ class Intersection:
     def tick(self, period):
         # updates properties based on period (ms)
         self.time += period / 1000
-        for car in self.cars:
+        for car in self.cars.copy():
             car.tick(period) # tick each car
             if car.distance > self.radius: self.cars.remove(car) # remove cars that have cleared the intersection
         
@@ -149,7 +149,7 @@ class Intersection:
 
     def render(self):
         # returns list of car ids, coordinates, and directions
-        return [(car.id) + car.render(self.size) + (car.speed) for car in self.cars]
+        return [(car.id,) + car.render(self.size) + (car.speed,) for car in self.cars]
 
 
     def tkrender(self, canvas, scale):
