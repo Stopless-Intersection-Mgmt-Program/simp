@@ -2,8 +2,6 @@
 
 # dependencies
 /frontend/node_modules
-/frontend/package-lock.json
-/frontend/package.json
 /backend/__pycache__
 /.pnp
 .pnp.js
