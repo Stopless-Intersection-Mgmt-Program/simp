@@ -50,9 +50,10 @@ class Intersection:
             ta = car2.course[-1][0] + (vt1 - vt2) / a2 - ((vf ** 2 - vt2 ** 2) / (2 * a2) - (vf ** 2 - vt1 ** 2) / (2 * a1)) / vf - d1 / vt1
             if ta > car1.atDistance(0)[0]: car1.setCourse(0, ta + self.buffer, vt1)
 
-        if li1 == li2 and vt1 < vt2: # if car2 starts in the same lane and car1 is slower
+        if li1 == li2 and vt1 <= vt2: # if car2 starts in the same lane and car1 is slower
             a1, a2 = car1.acceleration, car2.acceleration
             tm = car2.course[1][1] + (((a1 * vt2 ** 2 + a2 * vt1 ** 2) / (a1 + a2)) ** 0.5 - vt2) / a2
+            if len(car2.course) == 4 and vt1 == vt2: tm = car2.course[2][0]
             if tm < self.time: return
             dm, vm = car2.atTime(tm)
             dm += d1 - d2

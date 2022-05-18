@@ -24,6 +24,8 @@ class Traffic:
 
         # loop through other cars and set car to arrive after each
         car.setCourse(0, 0, vt)
+        self.cars.sort(key=lambda other: self.overlap(car.path, other.path)[0]) # sort by critical sections
+        
 
         # set car to accelerate to intersection speed once clear of intersection
         tf, vf = car.atDistance(dt)
@@ -31,6 +33,11 @@ class Traffic:
 
         print("Set course:", car.path, car.course)
         self.cars.append(car)
+
+
+    # GOALS:
+    # - Schedule to most convenient point, not fixed at start of intersection
+    # - Schedule any speed less than turn speed, whatever gets the car through the fastest
 
 
 

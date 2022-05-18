@@ -11,7 +11,7 @@ canvas = tk.Canvas(root, bg="grey15", height=600, width=1000)
 canvas.pack()
 
 # sample intersection
-intersection = Intersection.Intersection(0, 1)
+intersection = Intersection.Intersection(0, 1.5)
 # intersection = TrafficLight.TrafficLight()
 # intersection = Traffic.Traffic(0, 1)
 
