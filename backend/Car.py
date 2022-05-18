@@ -60,8 +60,8 @@ class Car:
     def atDistance(self, distance):
         # returns time (s) and speed (m/s) when car is at distance (m)
         dc, df, tc, v = self.distance, distance, self.time, self.speed
-        if self.course == []: # no course
-            return (df - dc) / v, v
+        if distance < dc: return None
+        if self.course == []: return (df - dc) / v, v # no course
         for course in self.course: # loop through course nodes
             cs, ce, ca = course
 
@@ -82,8 +82,8 @@ class Car:
     def atTime(self, time):
         # returns distance (m) and speed (m/s) of car at time (s)
         dc, tc, tf, v = self.distance, self.time, time, self.speed
-        if self.course == []: # no course
-            return dc + (tf - tc) * v, v
+        if time < tc: return None
+        if self.course == []: return dc + (tf - tc) * v, v # no course
         for course in self.course: # loop through course nodes
             cs, ce, ca = course
 

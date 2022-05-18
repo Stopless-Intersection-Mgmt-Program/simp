@@ -2,7 +2,7 @@ import math
 import random
 import Car
 
-class Intersection:
+class Traffic:
     def __init__(self, buffer, spawn = 0):
         self.size = 40 # length (m) of one side of the intersection
         self.speed = 30 # speed (m/s) of cars entering and exiting the intersection
@@ -12,7 +12,7 @@ class Intersection:
         self.time = 0 # clock to track time (s) elapsed
         self.cars = [] # list of cars monitored by the intersection
 
-        self.spawn = spawn # average cars per second for spawner
+        self.spawn = spawn # average time (s) between car spawns per lane
         random.seed(0) # seed the spawner for testing consistency
         self.cooldown = [0, 0, 0, 0, 0, 0, 0, 0] # spawner cooldown (s) for each of the 8 lanes
 
@@ -24,41 +24,14 @@ class Intersection:
 
         # loop through other cars and set car to arrive after each
         car.setCourse(0, 0, vt)
-        for other in reversed(self.cars): self.arriveAfter(car, other)
 
         # set car to accelerate to intersection speed once clear of intersection
-        tf = car.atDistance(dt)[0]
-        car.course.append((tf, (self.speed - vt) / car.acceleration + tf, car.acceleration))
+        tf, vf = car.atDistance(dt)
+        car.course.append((tf, (self.speed - vf) / car.acceleration + tf, car.acceleration))
 
         print("Set course:", car.path, car.course)
         self.cars.append(car)
 
-
-    def arriveAfter(self, car1, car2):
-        # sets car1 to arrive at the intersection after car2
-        overlap, vt1, vt2 = self.overlap(car1.path, car2.path), self.turnSpeed(car1), self.turnSpeed(car2)
-        (li1, lo1), (li2, lo2) = self.turnLanes(car1.path), self.turnLanes(car2.path)
-        if overlap == None or car2.course[-1][1] < self.time: return # no overlap or car2 has already completed its course
-
-        else: d1, d2 = overlap # if there is a critical section
-        if car2.distance < d2: # if car2 has not yet cleared the critical section
-            ta = car2.atDistance(d2)[0] - d1 / vt1
-            if ta > car1.atDistance(0)[0]: car1.setCourse(0, ta + self.buffer, vt1)
-
-        if lo1 == lo2 and vt1 > vt2: # if car2 ends in the same lane and car1 is faster
-            vf, a1, a2 = self.speed, car1.acceleration, car2.acceleration
-            ta = car2.course[-1][0] + (vt1 - vt2) / a2 - ((vf ** 2 - vt2 ** 2) / (2 * a2) - (vf ** 2 - vt1 ** 2) / (2 * a1)) / vf - d1 / vt1
-            if ta > car1.atDistance(0)[0]: car1.setCourse(0, ta + self.buffer, vt1)
-
-        if li1 == li2 and vt1 < vt2: # if car2 starts in the same lane and car1 is slower
-            a1, a2 = car1.acceleration, car2.acceleration
-            tm = car2.course[1][1] + (((a1 * vt2 ** 2 + a2 * vt1 ** 2) / (a1 + a2)) ** 0.5 - vt2) / a2
-            if tm < self.time: return
-            dm, vm = car2.atTime(tm)
-            dm += d1 - d2
-            if car1.atTime(tm)[0] > dm:
-                car1.setCourse(dm, tm + self.buffer, vm)
-                car1.course.append((tm + self.buffer, (vm - vt1) / a1 + tm, -a1))
 
 
     def turnLanes(self, path):
