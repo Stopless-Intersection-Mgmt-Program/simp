@@ -19,19 +19,18 @@ intersection = Intersection.Intersection(0, 1.5)
 # intersection.schedule(Car.Car(0, -310, 30, (0, 2)))
 # intersection.schedule(Car.Car(0, -320, 30, (0, 3)))
 # intersection.schedule(Car.Car(0, -330, 30, (0, 2)))
-# intersection.schedule(Car.Car(0, -340, 30, (0, 2)))
 # intersection.schedule(Car.Car(0, -350, 30, (0, 3)))
-# intersection.schedule(Car.Car(0, -360, 30, (0, 3)))
-# intersection.schedule(Car.Car(0, -370, 30, (0, 2)))
+# intersection.schedule(Car.Car(0, -390, 30, (0, 3)))
+# intersection.schedule(Car.Car(0, -400, 30, (0, 2)))
 
 
 
 # main loop
-period, speed = 20, 4
+period, speed = 20, 5
 while True:
     canvas.delete("all")
     intersection.tick(period * speed)
-    intersection.tkrender(canvas, 2)
+    intersection.tkrender(canvas, 3)
     canvas.update()
     root.after(period)
 root.mainloop()

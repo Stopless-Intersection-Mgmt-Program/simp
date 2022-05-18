@@ -5,6 +5,7 @@ import Car
 class Intersection:
     def __init__(self, buffer, spawn = 0):
         self.size = 40 # length (m) of one side of the intersection
+        self.angle = math.pi / 2 # angle (rad) of intersecting roads at top left corener
         self.speed = 30 # speed (m/s) of cars entering and exiting the intersection
         self.radius = 301 # distance (m) at which cars get spawned and despawned
         self.buffer = buffer # gap (s) added between cars travelling through intersection
@@ -47,19 +48,20 @@ class Intersection:
 
         if lo1 == lo2 and vt1 > vt2: # if car2 ends in the same lane and car1 is faster
             vf, a1, a2 = self.speed, car1.acceleration, car2.acceleration
-            ta = car2.course[-1][0] + (vt1 - vt2) / a2 - ((vf ** 2 - vt2 ** 2) / (2 * a2) - (vf ** 2 - vt1 ** 2) / (2 * a1)) / vf - d1 / vt1
+            ta = car2.course[-1][0] # base time is time car2 leaves intersection
+            ta += (vt1 - vt2) / a2 - ((vf ** 2 - vt2 ** 2) / (2 * a2) - (vf ** 2 - vt1 ** 2) / (2 * a1)) / vf - d1 / vt1
             if ta > car1.atDistance(0)[0]: car1.setCourse(0, ta + self.buffer, vt1)
 
         if li1 == li2 and vt1 <= vt2: # if car2 starts in the same lane and car1 is slower
             a1, a2 = car1.acceleration, car2.acceleration
-            tm = car2.course[1][1] + (((a1 * vt2 ** 2 + a2 * vt1 ** 2) / (a1 + a2)) ** 0.5 - vt2) / a2
-            if len(car2.course) == 4 and vt1 == vt2: tm = car2.course[2][0]
-            if tm < self.time: return
+            tm = car2.course[1][1] + (((a1 * vt2 ** 2 + a2 * vt1 ** 2) / (a1 + a2)) ** 0.5 - vt2) / a2 # calculate point of overlap
+            if len(car2.course) == 4 and vt1 == vt2: tm = car2.course[2][0] # check if previous car has extra course
+            if tm < self.time: return # ignore if overlap point already occured
             dm, vm = car2.atTime(tm)
-            dm += d1 - d2
+            dm, vm = dm + d1 - d2, min(vm, (vt1 ** 2 + 2 * a1 * (d1 - dm)) ** 0.5) # adjust vm so car has enough space to decelerate
             if car1.atTime(tm)[0] > dm:
-                car1.setCourse(dm, tm + self.buffer, vm)
-                car1.course.append((tm + self.buffer, (vm - vt1) / a1 + tm, -a1))
+                car1.setCourse(dm, tm + self.buffer, vm) # set course for overlap point
+                car1.course.append((tm + self.buffer, (vm - vt1) / a1 + tm, -a1)) # add course to arrive at intersection
 
 
     def turnLanes(self, path):
@@ -122,6 +124,40 @@ class Intersection:
 
         # adjust for intersection size
         return cs[0] * self.turnLength(path1), cs[1] * self.turnLength(path2)
+
+
+    def overlapT(self, path1, path2, recurse = True):
+        # returns distance (m) of intersection point for each path
+        (di1, do1), (di2, do2) = path1, path2
+        angle = self.angle if di1 % 2 == 0 else math.pi - self.angle
+        turn1, turn2 = (do1 - di1) % 4, (do2 - di2) % 4
+        reld = (di2 - di1) % 4 # relative direction of other car
+
+        c1, c2 = None, None
+        if reld == 0 and turn1 // 2 == turn2 // 2: c1, c2 = 0, 0 # if paths have same starting lane
+
+        if turn1 == 0 and reld == 1 and turn2 == 2: # U turn and straight
+            gap = 0
+            if gap < 10: c1, c2 = 0, 1
+        if turn1 == 0 and reld == 3 and turn2 == 1: c1, c2 = 0, 1 # U turn and left turn
+
+
+        if turn1 == 1 and reld == 1 and turn2 == 2: c1, c2 = 0, 1 # left turn and straight
+        if turn1 == 1 and reld == 3 and turn2 == 1: c1, c2 = 0, 1 # left turn and left turn
+
+        if turn1 == 2 and reld == 1 and turn2 == 2: c1, c2 = 0, 1 # straight and straight
+        if turn1 == 2 and reld == 2 and turn2 == 1: c1, c2 = 0, 1 # straight and left turn
+        if turn1 == 2 and reld == 2 and turn2 == 0: c1, c2 = 1, 1 # straight and U turn
+
+        if turn1 == 3 and reld == 1 and turn2 == 2: c1, c2 = 1, 1 # right turn and straight
+        if turn1 == 3 and reld == 3 and turn2 == 0: c1, c2 = 1, 1 # right turn and U turn
+
+        if c1 != None and c2 != None: return c1 * self.turnLength(path1) - 5, c2 * self.turnLength(path2) + 5
+        if recurse: # check if paths are in opposite order
+            overlap = self.overlap(path2, path1, False)
+            if overlap == None: return None
+            else: return overlap[1], overlap[0]
+        return None
 
 
     def spawner(self, period):
