@@ -15,7 +15,7 @@ class Intersection:
 
         self.spawn = spawn # average cars per second for spawner
         random.seed(0) # seed the spawner for testing consistency
-        self.cooldown = [0, 0, 0, 0, 0, 0, 0, 0] # spawner cooldown (s) for each of the 8 lanes
+        self.cooldown = [0, 0, 0, 0, 0, 0, 0, 0] # spawner cooldown (s) for each lane
 
 
     def schedule(self, car):
@@ -61,7 +61,7 @@ class Intersection:
             dm, vm = dm + d1 - d2, min(vm, (vt1 ** 2 + 2 * a1 * (d1 - dm)) ** 0.5) # adjust vm so car has enough space to decelerate
             if car1.atTime(tm)[0] > dm:
                 car1.setCourse(dm, tm + self.buffer, vm) # set course for overlap point
-                car1.course.append((tm + self.buffer, (vm - vt1) / a1 + tm, -a1)) # add course to arrive at intersection
+                car1.course.append([tm + self.buffer, (vm - vt1) / a1 + tm, -a1]) # add course to arrive at intersection
 
 
     def turnLanes(self, path):
@@ -91,7 +91,7 @@ class Intersection:
 
 
     def overlap(self, path1, path2):
-        # returns start distance on path1 and end distance on path2 of critical section
+        # returns start distance (m) on path1 and end distance (m) on path2 of critical section
         (di1, do1), (di2, do2) = path1, path2
         turn1, turn2 = (do1 - di1) % 4, (do2 - di2) % 4
         reld = (di2 - di1) % 4 # relative direction of other car
@@ -126,38 +126,38 @@ class Intersection:
         return cs[0] * self.turnLength(path1), cs[1] * self.turnLength(path2)
 
 
-    def overlapT(self, path1, path2, recurse = True):
-        # returns distance (m) of intersection point for each path
-        (di1, do1), (di2, do2) = path1, path2
-        angle = self.angle if di1 % 2 == 0 else math.pi - self.angle
-        turn1, turn2 = (do1 - di1) % 4, (do2 - di2) % 4
-        reld = (di2 - di1) % 4 # relative direction of other car
+    # def overlapT(self, path1, path2, recurse = True):
+    #     # returns distance (m) of intersection point for each path
+    #     (di1, do1), (di2, do2) = path1, path2
+    #     angle = self.angle if di1 % 2 == 0 else math.pi - self.angle
+    #     turn1, turn2 = (do1 - di1) % 4, (do2 - di2) % 4
+    #     reld = (di2 - di1) % 4 # relative direction of other car
 
-        c1, c2 = None, None
-        if reld == 0 and turn1 // 2 == turn2 // 2: c1, c2 = 0, 0 # if paths have same starting lane
+    #     c1, c2 = None, None
+    #     if reld == 0 and turn1 // 2 == turn2 // 2: c1, c2 = 0, 0 # if paths have same starting lane
 
-        if turn1 == 0 and reld == 1 and turn2 == 2: # U turn and straight
-            gap = 0
-            if gap < 10: c1, c2 = 0, 1
-        if turn1 == 0 and reld == 3 and turn2 == 1: c1, c2 = 0, 1 # U turn and left turn
+    #     if turn1 == 0 and reld == 1 and turn2 == 2: # U turn and straight
+    #         gap = 0
+    #         if gap < 10: c1, c2 = 0, 1
+    #     if turn1 == 0 and reld == 3 and turn2 == 1: c1, c2 = 0, 1 # U turn and left turn
 
 
-        if turn1 == 1 and reld == 1 and turn2 == 2: c1, c2 = 0, 1 # left turn and straight
-        if turn1 == 1 and reld == 3 and turn2 == 1: c1, c2 = 0, 1 # left turn and left turn
+    #     if turn1 == 1 and reld == 1 and turn2 == 2: c1, c2 = 0, 1 # left turn and straight
+    #     if turn1 == 1 and reld == 3 and turn2 == 1: c1, c2 = 0, 1 # left turn and left turn
 
-        if turn1 == 2 and reld == 1 and turn2 == 2: c1, c2 = 0, 1 # straight and straight
-        if turn1 == 2 and reld == 2 and turn2 == 1: c1, c2 = 0, 1 # straight and left turn
-        if turn1 == 2 and reld == 2 and turn2 == 0: c1, c2 = 1, 1 # straight and U turn
+    #     if turn1 == 2 and reld == 1 and turn2 == 2: c1, c2 = 0, 1 # straight and straight
+    #     if turn1 == 2 and reld == 2 and turn2 == 1: c1, c2 = 0, 1 # straight and left turn
+    #     if turn1 == 2 and reld == 2 and turn2 == 0: c1, c2 = 1, 1 # straight and U turn
 
-        if turn1 == 3 and reld == 1 and turn2 == 2: c1, c2 = 1, 1 # right turn and straight
-        if turn1 == 3 and reld == 3 and turn2 == 0: c1, c2 = 1, 1 # right turn and U turn
+    #     if turn1 == 3 and reld == 1 and turn2 == 2: c1, c2 = 1, 1 # right turn and straight
+    #     if turn1 == 3 and reld == 3 and turn2 == 0: c1, c2 = 1, 1 # right turn and U turn
 
-        if c1 != None and c2 != None: return c1 * self.turnLength(path1) - 5, c2 * self.turnLength(path2) + 5
-        if recurse: # check if paths are in opposite order
-            overlap = self.overlap(path2, path1, False)
-            if overlap == None: return None
-            else: return overlap[1], overlap[0]
-        return None
+    #     if c1 != None and c2 != None: return c1 * self.turnLength(path1) - 5, c2 * self.turnLength(path2) + 5
+    #     if recurse: # check if paths are in opposite order
+    #         overlap = self.overlap(path2, path1, False)
+    #         if overlap == None: return None
+    #         else: return overlap[1], overlap[0]
+    #     return None
 
 
     def spawner(self, period):
@@ -167,10 +167,10 @@ class Intersection:
             if self.cooldown[lane] != 0: continue # check if there is a cooldown still in effect
             if random.random() > (self.spawn / 8) * (period / 1000): continue # adjust for spawn rate
             if lane % 2 == 1: # left lane
-                if random.random() > 0.1: path = (lane // 2, (lane // 2 + 1) % 4) # 90% chance of left turn
+                if random.random() > 0.0: path = (lane // 2, (lane // 2 + 1) % 4) # 90% chance of left turn
                 else: path = (lane // 2, lane // 2) # 10% chance of U turn
             else: # right lane
-                if random.random() > 0.2: path = (lane // 2, (lane // 2 + 2) % 4) # 80% chance of straight
+                if random.random() > 0.0: path = (lane // 2, (lane // 2 + 2) % 4) # 80% chance of straight
                 else: path = (lane // 2, (lane // 2 + 3) % 4) # 20% chance of right turn
             self.schedule(Car.Car(0, -self.radius, self.speed, path))
             self.cooldown[lane] = 10 / self.speed + self.buffer # set cooldown for lane
@@ -194,6 +194,7 @@ class Intersection:
 
     def tkrender(self, canvas, scale):
         # renders intersection and each car on canvas
+        canvas.create_text(20, 20, text=round(self.time, 2), anchor="nw", fill="white")
         x0, y0 = int(canvas.cget("width")) / 2 + self.size / 2 * scale, int(canvas.cget("height")) / 2 - self.size / 2 * scale
         x1, y1 = int(canvas.cget("width")) / 2 - self.size / 2 * scale, int(canvas.cget("height")) / 2 + self.size / 2 * scale
         canvas.create_rectangle(x0, y0, x1, y1, fill="", width=2, outline="grey12")
