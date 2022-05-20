@@ -16,7 +16,6 @@ class Car:
     def setCourse(self, distance, time, speed):
         # sets course to reach distance (m) at time (s) with speed (m/s)
         dc, df, tc, tf, vc, vf, a = self.distance, distance, self.time, time, self.speed, speed, self.acceleration
-        # if abs(vf ** 2 - vc ** 2) > 2 * a * (df - dc): vf = (vc ** 2 + 2 * math.copysign(a, vf - vc) * (df - dc)) ** 0.5
         ranges = self.courseRanges(df, vf)
         if tf < ranges[0]: tf = ranges[0]
         if tf > ranges[3]: tf = ranges[3]
