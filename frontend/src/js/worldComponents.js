@@ -37,6 +37,18 @@ const CarComponent = (props) => {
 }
 
 
+/* RenderTrafficLight checks if 'Traffic Light' is selected in algorithm dropdown menu
+   renders traffic lights on roads if it is selected */
+const RenderTrafficLight = (props) => {
+    let render = []; 
+    if (props.algorithmValue === "Traffic Light") {
+        render.push(<span className='light' style={{height: 6, width: 6}}></span>); 
+    } 
+    
+    return render; 
+}
+
+
 /* Road Component: renders a road amongst an intersection,
     Every class Road contains an arbitrary amount of lanes
     as a proportion of roadWidth */
@@ -72,13 +84,17 @@ const RoadComponent = (props) => {
                     marginTop: .10 * props.roadWidth,
                     marginBottom: 0,
 
-                }} />
+                }}>
+                <RenderTrafficLight algorithmValue={props.algorithmValue}></RenderTrafficLight>
+            </div>
             <div className="lane"
                 style={{
                     height: 0.15 * props.roadWidth,
                     marginTop: 2,
                     marginBottom: 0,
-                }} />
+                }}>
+                <RenderTrafficLight algorithmValue={props.algorithmValue}></RenderTrafficLight>
+            </div>
         </div >
     )
 }
@@ -124,7 +140,8 @@ function RoadRenderer(props) {
                 spacingLeft={coordinates[0]}
                 spacingTop={coordinates[1]}
                 roadWidth={roadWidth}
-                roadLength={roadLength} />);
+                roadLength={roadLength}
+                algorithmValue={props.algorithmValue} />);
     })
     return (roadsToRender)
 }

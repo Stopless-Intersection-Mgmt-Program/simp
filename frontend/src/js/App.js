@@ -96,7 +96,7 @@ const App = () => {
         <DropDown
           id='algorithm'
           setValueForParent={setAlgorithmValue}
-          options={['First Come First Served', 'Shortest Job Next', 'Priority Scheduling', 'Round Robin', '... Add More']} />
+          options={['First Come First Served', 'Traffic Light', 'Priority Scheduling', 'Round Robin', '... Add More']} />
 
         <label htmlFor='intersection'>Intersection:</label>
         <DropDown
