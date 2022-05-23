@@ -1,10 +1,10 @@
 import '../css/App.css';
 import { useState, useEffect } from 'react';
-import DropDown from './dropdown';
-import World from './worldComponents';
-import { layoutMappings } from './intersection'
-import axios from 'axios';
-
+import DropDown from './appComponents/dropdown.js';
+import Button from './appComponents/button.js'
+import World from './appComponents/world.js';
+import { layoutMappings } from './appComponents/worldComponents/intersection.js'
+import { updateState, updateTick, setProcessInstance } from './apiCalls'
 
 const App = () => {
   const vw = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0)
@@ -20,27 +20,27 @@ const App = () => {
   const [situationValue, setSituationValue] = useState('Any');
   const [intersectionValue, setIntersectionValue] = useState('4-Way Intersection');
   const [algorithmValue, setAlgorithmValue] = useState('First Come First Served');
-  const [carArray, setCarArray] = useState([]);
+
   let criticalState = {
     state:
     {
-      cars: carArray,
       intersection: [93, layoutMappings[intersectionValue], algorithmValue, situationValue]
     }
   }
 
-  const [returnState, setReturnState] = useState();
+  const [returnState, setReturnState] = useState({ cars: [] });
 
-  function stateToJSON(state) {
-    console.log("JSON transfer started with,", state)
-    axios
-      .post('http://localhost:3001/apiStartProcess', state)
-      .then((output) => setReturnState(output.data))
-  }
+  /* Spawns python3 child process with initialized intersection values
+    Using the setProcessInstance api call. Updates returnState  */
+  useEffect(() => {
+    updateState(setProcessInstance, criticalState, setReturnState)
+  }, [intersectionValue, situationValue, algorithmValue])
 
+  /* Updates python3 child process on a 10ms interval to receive updated car positions.
+    Uses updateTick apicall, and updates returnState */
   useEffect(() => {
     const interval = setInterval(() => {
-      if (btnActive) { stateToJSON(criticalState) };
+      if (btnActive) { updateState(updateTick, null, setReturnState) }
     }, 10);
     return () => clearInterval(interval);
   }, [returnState, btnActive]);
@@ -64,8 +64,7 @@ const App = () => {
         intersectionType={intersectionValue}
         numCars={numCars}
         btnActive={btnActive}
-        returnState={returnState}
-        setValueForParent={setCarArray} />
+        returnState={returnState} />
 
       {/* SettingsWrapper 
             Holds the dropdownComponent,
@@ -110,13 +109,9 @@ const App = () => {
           null}
 
         {/* Play Button */}
-        <div
-          id='btn'
-          className='btn'
-          width="100%"
-          onClick={(event) => { setBtnActive(!btnActive); if (btnActive) stateToJSON(criticalState) }}>
-          {btnActive ? "Pause" : "Begin"}
-        </div>
+        <Button func={setBtnActive} arg={btnActive} name={btnActive ? "Pause" : "Begin"} />
+        {/* Restart Button */}
+        <Button func={updateState} arg={[setProcessInstance, criticalState, setReturnState]} name={"Restart"} />
       </div>
     </>
   )
