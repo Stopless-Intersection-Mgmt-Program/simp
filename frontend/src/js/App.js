@@ -1,7 +1,8 @@
 import '../css/App.css';
 import { useState, useEffect } from 'react';
 import DropDown from './dropdown';
-import { World, layoutMappings } from './worldComponents';
+import World from './worldComponents';
+import { layoutMappings } from './intersection'
 import axios from 'axios';
 
 
@@ -32,24 +33,9 @@ const App = () => {
 
   function stateToJSON(state) {
     console.log("JSON transfer started with,", state)
-
     axios
       .post('http://localhost:3001/apiStartProcess', state)
       .then((output) => setReturnState(output.data))
-
-  }
-
-  function pauseState(bool) {
-    console.log("Pause state initiated with bool", bool)
-    let pauseState = { state: { pause: bool } }
-    axios
-      .post('http://localhost:3001/apiPauseState', pauseState)
-      .then((output) => console.log("Pause state sent", output.data))
-  }
-
-  function restartState() {
-    axios
-      .post('http://localhost:3001/apiRestartState', true)
   }
 
   useEffect(() => {
@@ -92,22 +78,18 @@ const App = () => {
 
       <div className='settingsWrapper'>
 
-        <label htmlFor='algorithm'>Algorithm:</label>
         <DropDown
-          id='algorithm'
+          name='Algorithm:'
           setValueForParent={setAlgorithmValue}
           options={['First Come First Served', 'Traffic Light', 'Priority Scheduling', 'Round Robin', '... Add More']} />
 
-        <label htmlFor='intersection'>Intersection:</label>
         <DropDown
-          id='intersection'
+          name='Intersection:'
           setValueForParent={setIntersectionValue}
           options={['4-Way Intersection', 'T-Way Intersection', 'X-Way Intersection', 'Multi-Way Intersection', '... Add More']} />
 
-        <label htmlFor='situation'>Situation:</label>
-
         <DropDown
-          id='situation'
+          name='Situation:'
           setValueForParent={setSituationValue}
           options={['Any', '3-Car Staggered', '3-Car Simultaneous', '... Add More']} />
 
@@ -132,14 +114,8 @@ const App = () => {
           id='btn'
           className='btn'
           width="100%"
-          onClick={(event) => { setBtnActive(!btnActive); btnActive ? pauseState(btnActive) : stateToJSON(criticalState) }}>
+          onClick={(event) => { setBtnActive(!btnActive); if (btnActive) stateToJSON(criticalState) }}>
           {btnActive ? "Pause" : "Begin"}
-        </div>
-        <div
-          className='btn'
-          width="100%"
-          onClick={(event) => { restartState() }}>
-          Restart
         </div>
       </div>
     </>
