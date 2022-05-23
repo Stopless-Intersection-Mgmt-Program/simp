@@ -6,12 +6,16 @@ const DropDown = (props) => {
     const [dropDownValue, setDropDownValue] = useState()
 
     return (
-        <select className="dropDown"
-            onClick={(event) => event.stopPropagation()}
-            value={dropDownValue}
-            onChange={(event) => { setDropDownValue(event.target.value); if (props.setValueForParent) { props.setValueForParent(event.target.value) } }}>
-            {optionsArray.map((optionsElement) => <option key={optionsElement} value={optionsElement}>{optionsElement}</option>)}
-        </select>
+        <>
+            <label htmlFor={props.name}>{props.name}</label>
+            <select className="dropDown"
+                id={props.name}
+                onClick={(event) => event.stopPropagation()}
+                value={dropDownValue}
+                onChange={(event) => { setDropDownValue(event.target.value); if (props.setValueForParent) { props.setValueForParent(event.target.value) } }}>
+                {optionsArray.map((optionsElement) => <option key={optionsElement} value={optionsElement}>{optionsElement}</option>)}
+            </select>
+        </>
     )
 }
 
