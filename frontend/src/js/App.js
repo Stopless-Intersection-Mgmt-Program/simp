@@ -1,9 +1,9 @@
 import '../css/App.css';
 import { useState, useEffect } from 'react';
-import DropDown from './dropdown';
-import Button from './button'
-import World from './worldComponents';
-import { layoutMappings } from './intersection'
+import DropDown from './appComponents/dropdown.js';
+import Button from './appComponents/button.js'
+import World from './appComponents/world.js';
+import { layoutMappings } from './appComponents/worldComponents/intersection.js'
 import { updateState, updateTick, setProcessInstance } from './apiCalls'
 
 const App = () => {

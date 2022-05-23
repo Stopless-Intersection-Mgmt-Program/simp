@@ -1,5 +1,5 @@
-import { Intersection } from './intersection'
-import CarManager from './cars'
+import { Intersection } from './worldComponents/intersection.js'
+import CarManager from './worldComponents/cars.js'
 
 /* worldComponent passes all dimension props to intersectionComponent,
     and roadComponent, acts as the parent div of all car divs, roads, and lanes. 
