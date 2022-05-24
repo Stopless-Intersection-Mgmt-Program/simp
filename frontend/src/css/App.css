@@ -10,6 +10,14 @@ body {
   text-align: center;
 }
 
+.car {
+  margin: 0;
+  position: absolute;
+  border-radius: 2px;
+  z-index: 2;
+  border: 1px solid #FFFF;
+}
+
 .settingsWrapper {
   margin: 0;
   display: flex;
@@ -79,4 +87,14 @@ body {
   margin-bottom: 2.5px;
   background: #20464F;
   border-radius: 25px
+}
+
+/* Styling for traffic light */
+.light {
+  background-color: red;
+  position: relative;
+  top: -8px;
+  left: 95px;
+  border-radius: 50%;
+  display: inline-block;
 }

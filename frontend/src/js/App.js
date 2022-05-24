@@ -1,10 +1,15 @@
 import '../css/App.css';
-import { useState } from 'react';
-import DropDown from './dropdown';
-import World from './worldComponents';
-
+import { useState, useEffect } from 'react';
+import DropDown from './appComponents/dropdown.js';
+import Button from './appComponents/button.js'
+import World from './appComponents/world.js';
+import { layoutMappings } from './appComponents/worldComponents/intersection.js'
+import { updateState, updateTick, setProcessInstance } from './apiCalls'
 
 const App = () => {
+  const vw = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0)
+  const vh = Math.max(document.documentElement.clientHeight || 0, window.innerHeight || 0)
+  const intersectionLength = vw * .396825
 
   /* UseState Hooks
       Forces a rerender of associated components when
@@ -14,6 +19,32 @@ const App = () => {
   const [btnActive, setBtnActive] = useState(false);
   const [situationValue, setSituationValue] = useState('Any');
   const [intersectionValue, setIntersectionValue] = useState('4-Way Intersection');
+  const [algorithmValue, setAlgorithmValue] = useState('First Come First Served');
+
+  let criticalState = {
+    state:
+    {
+      intersection: [93, layoutMappings[intersectionValue], algorithmValue, situationValue]
+    }
+  }
+
+  const [returnState, setReturnState] = useState({ cars: [] });
+
+  /* Spawns python3 child process with initialized intersection values
+    Using the setProcessInstance api call. Updates returnState  */
+  useEffect(() => {
+    updateState(setProcessInstance, criticalState, setReturnState)
+  }, [intersectionValue, situationValue, algorithmValue])
+
+  /* Updates python3 child process on a 10ms interval to receive updated car positions.
+    Uses updateTick apicall, and updates returnState */
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (btnActive) { updateState(updateTick, null, setReturnState) }
+    }, 10);
+    return () => clearInterval(interval);
+  }, [returnState, btnActive]);
+
 
   return (
     <>
@@ -30,7 +61,10 @@ const App = () => {
       <World
         worldWidth={600}
         worldHeight={600}
-        intersectionType={intersectionValue} />
+        intersectionType={intersectionValue}
+        numCars={numCars}
+        btnActive={btnActive}
+        returnState={returnState} />
 
       {/* SettingsWrapper 
             Holds the dropdownComponent,
@@ -43,21 +77,18 @@ const App = () => {
 
       <div className='settingsWrapper'>
 
-        <label htmlFor='algorithm'>Algorithm:</label>
         <DropDown
-          id='algorithm'
-          options={['First Come First Served', 'Shortest Job Next', 'Priority Scheduling', 'Round Robin', '... Add More']} />
+          name='Algorithm:'
+          setValueForParent={setAlgorithmValue}
+          options={['First Come First Served', 'Traffic Light', 'Priority Scheduling', 'Round Robin', '... Add More']} />
 
-        <label htmlFor='intersection'>Intersection:</label>
         <DropDown
-          id='intersection'
+          name='Intersection:'
           setValueForParent={setIntersectionValue}
           options={['4-Way Intersection', 'T-Way Intersection', 'X-Way Intersection', 'Multi-Way Intersection', '... Add More']} />
 
-        <label htmlFor='situation'>Situation:</label>
-
         <DropDown
-          id='situation'
+          name='Situation:'
           setValueForParent={setSituationValue}
           options={['Any', '3-Car Staggered', '3-Car Simultaneous', '... Add More']} />
 
@@ -78,13 +109,9 @@ const App = () => {
           null}
 
         {/* Play Button */}
-        <div
-          id='btn'
-          className='btn'
-          width="100%"
-          onClick={(event) => setBtnActive(!btnActive)}>
-          {btnActive ? "Pause" : "Begin"}
-        </div>
+        <Button func={setBtnActive} arg={btnActive} name={btnActive ? "Pause" : "Begin"} />
+        {/* Restart Button */}
+        <Button func={updateState} arg={[setProcessInstance, criticalState, setReturnState]} name={"Restart"} />
       </div>
     </>
   )
