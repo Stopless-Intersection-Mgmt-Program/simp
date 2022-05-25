@@ -33,7 +33,8 @@ class Intersection:
         tf, vf = car.atDistance(dt)
         car.course.append([tf, (self.speed - vf) / car.acceleration + tf, car.acceleration])
 
-        print("Set course:", car.speed, car.path, car.course)
+        #print("Set course:", car.path, car.course)
+
         self.cars.append(car)
         self.last[self.turnLanes(car.path)[0]] = car
 
@@ -202,7 +203,7 @@ class Intersection:
 
     def render(self):
         # returns list of car ids, coordinates, and directions
-        return [(car.id,) + car.render(self.size) + (car.speed,) for car in self.cars]
+        return [[car.id] + list(car.render(self.size)) + [car.speed] for car in self.cars]
 
 
     def tkrender(self, canvas, scale):
