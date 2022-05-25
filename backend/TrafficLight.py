@@ -1,17 +1,17 @@
-import math
+import Intersection
 
-# THINGS TO FIX:
-# - green method needs a way to verify that car does not exceed turn speed
+# Fix:
+# - U turns and right turns
 
-class TrafficLight:
-    def __init__(self):
-        self.size = 40 # length (m) of one side of the intersection
-        self.time = 0 # clock to track time (ms) elapsed
-        self.cars = [] # list of cars monitored by the intersection
+class TrafficLight(Intersection.Intersection):
+    def __init__(self, buffer, spawn = 0):
         self.lanes = [[], [], [], [], [], [], [], []] # list of cars waiting in each lane
-        
-        self.lights = [0, 0, 0, 0, 0, 0, 0, 0] # list of times (s) until lanes are no longer green
-        self.current = 1 # lane that is being waited on for next green
+        self.lights = [0] * 8 # green light cooldowns (s) for each lane
+        self.tail = [(None, 0)] * 8 # list of last car to be scheduled in each lane and acceleration distance
+        self.current = 0 # lane that is being waited on for next green
+
+        super().__init__(buffer, spawn)
+        self.distribution = [0, 0]
 
 
     def schedule(self, car):
@@ -19,69 +19,49 @@ class TrafficLight:
         car.time = self.time # synchronize clocks
         self.cars.append(car)
 
-        li, lo = car.path
-        if (lo - li) % 4 < 2: lane = li * 2 + 1 # left turn lane
-        else: lane = li * 2
-        stop(car, -4 - 8 * len(self.lanes[lane])) # stop car
+        lane = self.turnLanes(car.path)[0]
+        car.setCourse(-8 * (1 + len(self.lanes[lane])), self.lights[lane] + self.time + 5, 1.e-8) # stop car
         self.lanes[lane].append(car)
 
 
     def signal(self, order):
         # determines which lanes should have a green light based on order of lights
-        if self.lights[self.current] > self.time: # waiting on cars to pass through
+        if self.lights[self.current] > 0: # waiting on cars to pass through
             if (self.current // 2) % 2 == (order[self.current] // 2) % 2: # check if next lane is on same road
-                self.lights[order[self.current]] = self.green(order[self.current])
+                self.green(order[self.current])
         
         else: # set increment current and set next light to green
             self.current = order[self.current]
-            self.lights[self.current] = self.green(self.current)
+            self.green(self.current)
+            self.tail[self.current] = (None, 0)
 
 
     def green(self, lane):
-        # sets cars in lane to go and returns the time (s) when the last car clears the intersection
-        if len(self.lanes[lane]) == 0: return 0 # no wait time if no cars in lane
-        for i in range(len(self.lanes[lane])):
+        # sets cars in lane to go and sets the cooldown for when the last car clears the intersection
+        wait, (last, df) = self.lights[lane], self.tail[lane]
+        for i in range(len(self.lanes[lane])): # loop through all cars in lane
             car = self.lanes[lane].pop(0)
-            t = (40 - car.speed) / car.acceleration + self.time # time car will reach final speed
-            delay = 0 if i == 0 else max(i * 0.5, tp - t) # set delay to avoid hitting previous car
-            go(car, 40, delay)
-            tp = t + delay
-        return car.atDistance(60)[0] # a distance of 60 will clear any other cars
+            dt, vt = self.turnLength(car.path), self.turnSpeed(car)
+            dc, vc, a = car.distance, car.speed, car.acceleration
 
+            if last == None: df, tf = dc + abs(vt ** 2 - vc ** 2) / (2 * a) + 1.e-3, 0 # calculate distance and time to turn speed
+            else: df, tf = df - 8, 0 if last.distance > df else last.atDistance(df)[0] + 8 / vt # schedule to previous distance to avoid collision
+            car.setCourse(df, tf + self.buffer, vt)
+            print(car.path, car.distance, car.speed, car.course)
+
+            if car.atDistance(0)[1] > vt: car.setCourse(0, tf - df / vt, vt) # ensure turn speed is not exceded
+
+            # set car to accelerate to intersection speed once clear of intersection
+            tf = max(car.course[-1][1], car.atDistance(dt)[0])
+            car.course.append((tf, (self.speed - vt) / car.acceleration + tf, car.acceleration))
+
+            print("Set course:", car.path, car.course)
+            wait, last = car.atDistance(self.turnLength(car.path))[0] - self.time, car
+        self.lights[lane], self.tail[lane] = wait, (last, df)
+        
 
     def tick(self, period):
-        # ticks each car and increments the time for period (ms)
+        # updates properties based on period (ms)
+        self.lights = [t - (period / 1000) if t > 0 else 0 for t in self.lights]
         self.signal([4, 0, 3, 1, 5, 7, 2, 6]) # left/straight, straight/straight, straight/left
-        self.time = self.time + period / 1000
-
-        for car in self.cars: car.tick(self.time) # tick each car
-
-
-    def render(self):
-        # returns list of car ids, coordinates, and directions
-        return [car.render(self.size) for car in self.cars]
-
-
-    def tkrender(self, canvas, scale):
-        # renders intersection and each car on canvas
-        x0, y0 = int(canvas.cget("width")) / 2 + self.size / 2 * scale, int(canvas.cget("height")) / 2 - self.size / 2 * scale
-        x1, y1 = int(canvas.cget("width")) / 2 - self.size / 2 * scale, int(canvas.cget("height")) / 2 + self.size / 2 * scale
-        canvas.create_rectangle(x0, y0, x1, y1, fill="", width=2, outline="grey12")
-
-        for car in self.cars: car.tkrender(self.size, canvas, scale) # render each car
-
-
-
-# Additional Car Methods
-def stop(car, distance):
-    # sets course so car stops at distance (m)
-    dc, df, tc, v = car.distance, distance, car.time, car.speed
-    a, tf = v ** 2 / (-2 * (df - dc)), 2 * (df - dc) / v + tc
-    car.course = [(tc, tf, a)]
-
-
-def go(car, speed, delay):
-    # sets course so car accelerates to speed (m/s) after delay (s)
-    tc, d, vc, vf, a = car.time, delay, car.speed, speed, car.acceleration
-    tf = (vf - vc) / a + tc + d
-    car.course = [(tc + d, tf, a)]
+        super().tick(period)

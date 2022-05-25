@@ -10,7 +10,7 @@ class Car:
         self.time = 0 # time (s) used by intersection to synchronize behavior
         self.distance = distance # distance (m) relative to the enterance of the intersection (negative means approaching intersection)
         self.speed = speed # speed (m/s) of car relative to path
-        self.course = [] # list of tuples containing a start time, end time, and acceleration
+        self.course = [] # list of lists containing a start time, end time, and acceleration
 
 
     def setCourse(self, distance, time, speed):
@@ -18,18 +18,27 @@ class Car:
         dc, df, tc, tf, vc, vf, a = self.distance, distance, self.time, time, self.speed, speed, self.acceleration
         ranges = self.courseRanges(df, vf)
         if tf < ranges[0]: tf = ranges[0]
+        if tf > ranges[3]: tf = ranges[3]
 
         # check if in ++ or -- course range
         if tf >= ranges[1] and tf <= ranges[2]:
             if vf < vc: a = -a
             t = (vf ** 2 - 2 * vc * vf + vc ** 2 + 2 * a * (tf - tc) * vc - 2 * a * (df - dc)) / (2 * a * ((vf - vc) - a * (tf - tc)))
-            self.course = [(tc, tc + t, a), (tf - ((vf - vc) / a - t), tf, a)]
+            self.course = [[tc, tc + t, a], [tf - ((vf - vc) / a - t), tf, a]]
 
         # check if in +- or -+ course range
         elif tf >= ranges[0] and tf <= ranges[3]:
             if tf >= ranges[2]: a = -a
             t = (math.copysign(1, -a) * (2 * (vc + a * (tf - tc)) * vf - vf ** 2 + 2 * a * (tf - tc) * vc - vc ** 2 + a ** 2 * (tf ** 2 - 2 * tc * tf + tc ** 2) - 4 * a * (df - dc)) ** 0.5 + (vf - vc) + a * (tf - tc)) / (2 * a)
-            self.course = [(tc, tc + t, a), (tf - ((vc - vf) / a + t), tf, -a)]
+            self.course = [[tc, tc + t, a], [tf - ((vc - vf) / a + t), tf, -a]]
+
+
+    def appendCourse(self, distance, time, speed):
+        # appends course to reach distance (m) at time (s) with speed (m/s)
+        dc, tc, vc, course = self.distance, self.time, self.speed, self.course # make copy of all properties
+        (self.distance, self.speed), self.time = self.atTime(self.course[-1][1]), self.course[-1][1] # set car to end of course
+        self.setCourse(distance, time, speed) # generate new course
+        self.distance, self.time, self.speed, self.course = dc, tc, vc, course + self.course # reset original properties with appended course
 
 
     def courseRanges(self, distance, speed):
@@ -40,14 +49,14 @@ class Car:
         # time range for +- course
         ts = ((2 * (vf ** 2 + vc ** 2 + 2 * a * (df - dc))) ** 0.5 - vf - vc + a * tc) / a
         tl = (vl ** 2 - 2 * vh * vl + vh ** 2 + 2 * a * tc * vh + 2 * a * (df - dc)) / (2 * a * vh)
-        ranges += [ts + 0.0000001, tl]
+        ranges += [ts + 1.e-8, tl]
 
         a = -a # switch acceleration sign
 
         # time range for -+ course
         ts = (vh ** 2 - 2 * vl * vh + vl ** 2 + 2 * a * tc * vl + 2 * a * (df - dc)) / (2 * a * vl)
-        tl = ((2 * (vf ** 2 + vc ** 2 + 2 * a * (df - dc))) ** 0.5 - vf - vc + a * tc) / a     
-        ranges += [ts, float('inf') if isinstance(tl, complex) else tl + 0.0000001]
+        tl = ((2 * (vf ** 2 + vc ** 2 + 2 * a * (df - dc))) ** 0.5 - vf - vc + a * tc) / a
+        ranges += [ts, float('inf') if isinstance(tl, complex) else tl - 1.e-8]
         return ranges
 
 
@@ -59,52 +68,53 @@ class Car:
 
     def atDistance(self, distance):
         # returns time (s) and speed (m/s) when car is at distance (m)
-        dc, df, tc, v = self.distance, distance, self.time, self.speed
-        if self.course == []: # no course
-            return (df - dc) / v, v
+        dc, df, tc, vc = self.distance, distance, self.time, self.speed
+        if distance < dc: return None
+        if self.course == []: return (df - dc) / vc, vc # no course
         for course in self.course: # loop through course nodes
             cs, ce, ca = course
 
             if tc < cs: # before acceleration period
-                t, d = cs - tc, v * (cs - tc) # relative time and distance
-                if dc + d > df: return tc + (df - dc) / v, v # will finish in this section
+                t, d = cs - tc, vc * (cs - tc) # relative time and distance
+                if dc + d > df: return tc + (df - dc) / vc, vc # will finish in this section
                 tc, dc = tc + t, dc + d
 
             if tc < ce: # during acceleration period
-                t, d = ce - tc, 0.5 * ca * (ce - tc) ** 2 + v * (ce - tc)
-                if dc + d > df: return tc + ((2 * ca * (df - dc) + v ** 2) ** 0.5 - v) / ca, (v ** 2 + 2 * ca * (df - dc)) ** 0.5
-                tc, dc, v = tc + t, dc + d, v + ca * t
+                t, d = ce - tc, 0.5 * ca * (ce - tc) ** 2 + vc * (ce - tc)
+                if dc + d > df: return tc + ((2 * ca * (df - dc) + vc ** 2) ** 0.5 - vc) / ca, (vc ** 2 + 2 * ca * (df - dc)) ** 0.5
+                tc, dc, vc = tc + t, dc + d, vc + ca * t
 
         if tc >= ce: # after acceleration period
-            return tc + (df - dc) / v, v
+            if vc == 0: return float('inf'), 0
+            return tc + (df - dc) / vc, vc
 
 
     def atTime(self, time):
         # returns distance (m) and speed (m/s) of car at time (s)
-        dc, tc, tf, v = self.distance, self.time, time, self.speed
-        if self.course == []: # no course
-            return dc + (tf - tc) * v, v
+        dc, tc, tf, vc = self.distance, self.time, time, self.speed
+        if time < tc: return None
+        if self.course == []: return dc + (tf - tc) * vc, vc # no course
         for course in self.course: # loop through course nodes
             cs, ce, ca = course
 
             if tc < cs: # before acceleration period
                 t = (min(tf, cs) - tc) # relative time
-                tc, dc = tc + t, dc + t * v
+                tc, dc = tc + t, dc + t * vc
 
             if tf >= cs and tc <= ce: # during acceleration period
                 t = (min(tf, ce) - max(tc, cs))
-                tc, dc, v = tc + t, dc + 0.5 * ca * t ** 2 + v * t, v + ca * t
+                tc, dc, vc = tc + t, dc + 0.5 * ca * t ** 2 + vc * t, vc + ca * t
         
         if tf > ce: # after acceleration period
             t = (tf - max(tc, ce))
-            dc = dc + t * v
-        return dc, v
+            dc = dc + t * vc
+        return dc, vc
         
 
     def tick(self, period):
         # updates properties based on period (ms)
-        self.distance, self.speed = self.atTime(self.time + period / 1000)
-        self.time += period / 1000
+        self.distance, self.speed = self.atTime(self.time + period * 1.e-3)
+        self.time += period * 1.e-3
 
 
     def render(self, size):
