@@ -1,8 +1,6 @@
 
 
 const Button = (props) => {
-    console.log("wopoo", props.arg, props.name);
-    console.log(Array.isArray(props.arg));
     return (
         <div
             id='btn'

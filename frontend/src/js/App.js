@@ -4,7 +4,7 @@ import DropDown from './appComponents/dropdown.js';
 import Button from './appComponents/button.js'
 import World from './appComponents/world.js';
 import { layoutMappings } from './appComponents/worldComponents/intersection.js'
-import { updateState, updateTick, setProcessInstance } from './apiCalls'
+import { updateState, updateTick, setProcessInstance } from './appComponents/apiCalls'
 
 const App = () => {
   const vw = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0)
@@ -61,6 +61,8 @@ const App = () => {
       <World
         worldWidth={600}
         worldHeight={600}
+        vh={vh}
+        vw={vw}
         intersectionType={intersectionValue}
         numCars={numCars}
         btnActive={btnActive}

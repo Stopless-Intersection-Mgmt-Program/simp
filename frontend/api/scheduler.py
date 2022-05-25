@@ -4,7 +4,7 @@ import json
 sys.path.append('../../backend')
 import Intersection
 
-intersection = Intersection.Intersection(0, 4)
+intersection = Intersection.Intersection(0, 2)
 intersectionProps = None
 
 while True:
