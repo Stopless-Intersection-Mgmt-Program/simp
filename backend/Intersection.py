@@ -80,6 +80,31 @@ class Intersection:
             car.setCourse(0, ta, vt)
 
 
+        # last = self.last[self.turnLanes(car.path)[0]]
+        # dc, df, ta, vt, vc, a = car.distance, 0, time, self.turnSpeed(car), car.speed, car.acceleration
+        # car.setCourse(0, ta, vt)
+        # if last == None or last.course[1][0] < self.time or last.atTime(last.course[1][0])[1] > car.atTime(car.course[1][0])[1] or vt > self.turnSpeed(last): return
+
+        # ti, (di, vi) = last.course[1][1], last.atTime(last.course[1][1])
+        # car.setCourse(di - 10, ti, vi)
+        # if len(last.course) == 4:
+        #     return car.course.append([car.course[1][1], car.course[1][1] + abs(vt - vi) / a, math.copysign(a, vt - vi)])
+
+        # if vt < self.turnSpeed(last):
+        #     ts = ((2 * (vt ** 2 + 2 * a * (df - (di - 10)) + vi ** 2)) ** 0.5 + 2 * a * ti - 2 * vi) / (2 * a)
+        #     if ts < last.course[1][0]: return car.setCourse(0, ta, vt)
+        #     vs = car.atTime(ts)[1]
+        #     car.course[1][1] = ts
+        #     car.course.append([ts, ts + abs(vt - vs) / a, math.copysign(a, vt - vs)])
+
+        #     di, vi = last.atTime(last.course[1][0])
+        #     dm = df - abs(vt ** 2 - vi ** 2) / (2 * a)
+        #     if di > dm:
+        #         di, ti = dm, last.atDistance(dm + 10)[0]
+        #         car.setCourse(di, ti, vi)
+        #         car.course.append([car.course[1][1], car.course[1][1] + abs(vt - vi) / a, math.copysign(a, vt - vi)])
+
+
     def turnLanes(self, path):
         # returns start and end lane of the path
         di, do = path
