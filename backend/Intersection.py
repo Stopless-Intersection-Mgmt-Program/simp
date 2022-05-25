@@ -133,8 +133,9 @@ class Intersection:
             else: # right lane
                 if random.random() > 0.2: path = (lane // 2, (lane // 2 + 2) % 4) # 80% chance of straight
                 else: path = (lane // 2, (lane // 2 + 3) % 4) # 20% chance of right turn
+            # print(self.time, path)
             self.schedule(Car.Car(0, -self.radius, self.speed, path))
-            self.cooldown[lane] = 10 / self.speed + self.buffer # set cooldown for lane
+            self.cooldown[lane] = 5 / self.speed + self.buffer # set cooldown for lane
 
 
     def tick(self, period):
@@ -144,7 +145,7 @@ class Intersection:
             car.tick(period) # tick each car
             if car.distance > self.radius: self.cars.remove(car) # remove cars that have cleared the intersection
         
-        if self.spawn > 0: self.spawner(period) # run spawner if active
+        # if self.spawn > 0: self.spawner(period) # run spawner if active
 
 
     def render(self):
