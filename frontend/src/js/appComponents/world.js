@@ -13,8 +13,8 @@ const World = (props) => {
                     height: props.worldHeight,
                     width: props.worldWidth,
                     position: 'absolute',
-                    marginTop: '1%',
-                    marginLeft: '30%',
+                    top: .20 * props.vh,
+                    left: .30 * props.vw,
                 }}>
                 <Intersection {...props} />
                 <CarManager {...props} />

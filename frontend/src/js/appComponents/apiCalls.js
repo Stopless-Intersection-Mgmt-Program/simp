@@ -1,6 +1,5 @@
 import axios from 'axios';
 
-
 /* Calls the api with intersection state and returns the first child_process tick */
 function setProcessInstance(state) {
     return axios

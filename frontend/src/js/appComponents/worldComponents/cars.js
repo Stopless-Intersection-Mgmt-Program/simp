@@ -1,6 +1,6 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
+
 let spawnedCars = [];
-let carID = 0;
 
 function detectCollision(r1, r2) {
     if (r1.x + r1.width >= r2.x &&     // r1 right edge past r2 left
@@ -16,6 +16,7 @@ function detectCollision(r1, r2) {
     renders a car object with coordinates/angle/startPoint/endPoint dependent on the Car Spawner,
     generates carid, car dimensions, speed, */
 const CarComponent = (props) => {
+    console.log(props.speed, `hsl(0, 100%, ${((props.speed / 30) * .5 + .5) * 100 + '%'}})`)
     return (
         <div className="car"
             style={{
@@ -24,7 +25,8 @@ const CarComponent = (props) => {
                 width: 4 * 2.2325, //Will generate random dimensions in sprint 4 
                 left: props.left - 4 * 2.2325 / 2,
                 top: props.top - 2 * 2.2325 / 2,
-                transform: `rotate(${props.angle})`
+                transform: `rotate(${props.angle})`,
+                backgroundColor: `hsl(0, 100%, ${((props.speed / 30) * .5 + .5) * 100 + '%'})`
             }}>
         </div>
     )
@@ -32,17 +34,36 @@ const CarComponent = (props) => {
 
 const CarManager = (props) => {
     useEffect(() => {
+        //Constant for collision testing values never change.
+        const world = {
+            width: props.worldWidth,
+            height: props.worldHeight,
+            x: 0,
+            y: 0
+        }
         const fetchState = async () => {
-            spawnedCars = []
             let returnCars = await props.returnState
+            if (!returnCars) {
+                return spawnedCars
+            }
+            spawnedCars = [];
             returnCars.cars.forEach((car) => {
-                spawnedCars.push(
-                    <CarComponent
-                        carID={car[0]}
-                        left={car[1] * 2.325 + 300}
-                        top={(-1 * car[2]) * 2.325 + 300}
-                        angle={-1 * car[3] + 'rad'} />
-                )
+                let newCar = {
+                    x: car[1] * 2.325 + 300,
+                    y: -1 * car[2] * 2.2325 + 300,
+                    width: 4 * 2.2325,
+                    height: 2 * 2.2325
+                }
+                if (detectCollision(newCar, world)) {
+                    spawnedCars.push(
+                        <CarComponent
+                            carID={car[0]}
+                            left={newCar.x}
+                            top={newCar.y}
+                            angle={-1 * car[3] + 'rad'}
+                            speed={car[4]} />
+                    )
+                }
             })
         }
         fetchState()
