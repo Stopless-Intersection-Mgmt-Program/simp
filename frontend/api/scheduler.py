@@ -18,7 +18,7 @@ while True:
                 intersectionProps = dicIn["intersection"]
             
             # Write Out
-            intersection.tick(10)
+            intersection.tick(25)
             dicOut = {"cars" : intersection.render()}
             print(json.dumps(dicOut))
 
