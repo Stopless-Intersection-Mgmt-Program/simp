@@ -11,11 +11,13 @@ class Intersection:
 
         self.time = 0 # clock to track time (s) elapsed
         self.cars = [] # list of cars monitored by the intersection
+        self.last = [None] * 8 # last car in each lane
 
         self.spawn = spawn # average cars per second for spawner
         random.seed(0) # seed the spawner for testing consistency
         self.distribution = [0.1, 0.2] # probability of a U turn and right turn
-        self.cooldown = [0, 0, 0, 0, 0, 0, 0, 0] # spawner cooldown (s) for each lane
+
+        # if self.spawn != 0: self.speed = 60 / (self.spawn + 1)
 
 
     def schedule(self, car):
@@ -24,50 +26,64 @@ class Intersection:
         vt, dt = self.turnSpeed(car), self.turnLength(car.path)
 
         # loop through other cars and set car to arrive after each
-        car.setCourse(0, 0, vt)
-        for other in reversed(self.cars): self.arriveAfter(car, other)
+        ta = max(self.earliestArrival(car, other) for other in self.cars) if len(self.cars) > 0 else 0
+        self.followLast(car, ta)
 
         # set car to accelerate to intersection speed once clear of intersection
-        tf = car.atDistance(dt)[0]
-        car.course.append((tf, (self.speed - vt) / car.acceleration + tf, car.acceleration))
+        tf, vf = car.atDistance(dt)
+        car.course.append([tf, (self.speed - vf) / car.acceleration + tf, car.acceleration])
 
-        print("Set course:", car.path, car.course)
+        print("Set course:", car.speed, car.path, car.course)
         self.cars.append(car)
+        self.last[self.turnLanes(car.path)[0]] = car
+
+        # tf, vf = car.atDistance(0)
+        # print(tf, car.course[-2][1])
+        # if tf < ta - 1.e-6 or abs(vt - vf) > 1.e-6:
+        #     print(ta, tf, vt, vf)
+        #     exit()
 
 
-    def arriveAfter(self, car1, car2):
-        # sets car1 to arrive at the intersection after car2
-        overlap, vt1, vt2 = self.overlap(car1.path, car2.path), self.turnSpeed(car1), self.turnSpeed(car2)
-        (li1, lo1), (li2, lo2) = self.turnLanes(car1.path), self.turnLanes(car2.path)
-        if overlap == None or car2.course[-1][1] < self.time: return # no overlap or car2 has already completed its course
+    def earliestArrival(self, car, other):
+        # sets car to arrive at the intersection after other
+        overlap, vt, vto = self.overlap(car.path, other.path), self.turnSpeed(car), self.turnSpeed(other)
+        if overlap == None or other.course[-1][1] < self.time: return 0 # no overlap or other has already completed its course
 
-        else: d1, d2 = overlap # if there is a critical section
-        if car2.distance < d2: # if car2 has not yet cleared the critical section
-            ta = car2.atDistance(d2)[0] - d1 / vt1
-            if ta > car1.atDistance(0)[0]: car1.setCourse(0, ta + self.buffer, vt1)
+        else: (d1, d2), ta = overlap, 0 # if there is a critical section
+        if other.distance < d2: # if other has not yet cleared the critical section
+            ta = other.atDistance(d2)[0] - d1 / vt
 
-        if lo1 == lo2 and vt1 > vt2: # if car2 ends in the same lane and car1 is faster
-            vf, a1, a2 = self.speed, car1.acceleration, car2.acceleration
-            ta = car2.course[-1][0] # base time is time car2 leaves intersection
-            ta += (vt1 - vt2) / a2 - ((vf ** 2 - vt2 ** 2) / (2 * a2) - (vf ** 2 - vt1 ** 2) / (2 * a1)) / vf - d1 / vt1
-            if ta > car1.atDistance(0)[0]: car1.setCourse(0, ta + self.buffer, vt1)
+        if self.turnLanes(car.path)[1] == self.turnLanes(other.path)[1] and vt >= vto: # if other ends in the same lane and car is faster
+            dt, vf, a = self.turnLength(car.path), self.speed, car.acceleration
+            ta = other.course[-1][0] # base time is time other leaves intersection
+            ta += (vt - vto) / a - (vt ** 2 - vto ** 2) / (2 * a * vf) - (dt - 10) / vt
 
-        if li1 == li2 and vt1 <= vt2: # if car2 starts in the same lane and car1 is slower
-            a1, a2 = car1.acceleration, car2.acceleration
-            tm = car2.course[1][1] + (((a1 * vt2 ** 2 + a2 * vt1 ** 2) / (a1 + a2)) ** 0.5 - vt2) / a2 # calculate point of overlap
-            if len(car2.course) == 4 and vt1 == vt2: tm = car2.course[2][0] # check if previous car has extra course
-            if tm < self.time: return # ignore if overlap point already occured
-            dm, vm = car2.atTime(tm)
-            dm, vm = dm + d1 - d2, min(vm, (vt1 ** 2 + 2 * a1 * (d1 - dm)) ** 0.5) # adjust vm so car has enough space to decelerate
-            if car1.atTime(tm)[0] > dm:
-                car1.setCourse(dm, tm + self.buffer, vm) # set course for overlap point
-                car1.course.append([tm + self.buffer, (vm - vt1) / a1 + tm, -a1]) # add course to arrive at intersection
+        return ta + self.buffer
+
+
+    def followLast(self, car, time):
+        # sets car to arrive at intersection at time (s) without colliding with the car in front of it
+        last = self.last[self.turnLanes(car.path)[0]]
+        ta, vt, a = time, self.turnSpeed(car), car.acceleration
+        car.setCourse(0, ta, vt)
+        if last == None or last.course[1][1] < self.time: return
+
+        vtl = self.turnSpeed(last)
+        if vt == vtl:
+            di, vi = last.atTime(last.course[1][1])
+            ti = max(last.course[1][1], ta - (10 - di) / vt)
+            if ti < car.rangeTo(di - 10, vi)[1]: car.setCourse(di - 10, ti, vi)
+
+        if vt < vtl:
+            vi = (vtl - (last.course[1][1] - last.course[1][0]) * last.course[1][2])
+            ta = max(ta, last.course[1][1] + (2 * vi ** 2 - 2 * (vtl + vt) * vi + vtl ** 2 + vt ** 2) / (2 * a * vi) + 10 / vt)
+            car.setCourse(0, ta, vt)
 
 
     def turnLanes(self, path):
         # returns start and end lane of the path
         di, do = path
-        return di * 2 + ((do - di) % 4) // 2, do * 2 + ((do - di) % 4 == 1)
+        return di * 2 + ((do - di) % 4 < 2), do * 2 + ((do - di) % 4 == 1)
 
 
     def turnSpeed(self, car):
@@ -127,30 +143,36 @@ class Intersection:
 
 
     def spawner(self, period):
-        # based on the array of distributions for the 4 turns, randomly spawns cars and schedules them
-        self.cooldown = [t - (period / 1000) if t > 0 else 0 for t in self.cooldown]
+        # based on the array of distributions for the 4 turns, randomly spawns cars and schedules them    
         for lane in range(8): # loop through each lane
-            if self.cooldown[lane] != 0: continue # check if there is a cooldown still in effect
-            if random.random() > (self.spawn / 8) * (period / 1000): continue # adjust for spawn rate
+            last, vs = self.last[lane], self.speed
+            if last != None and last.distance < -self.radius + 10: continue # wait for last to clear spawn box
+            if random.random() > (self.spawn / 8) * (period * 1.e-3): continue # adjust for spawn rate
+
             if lane % 2 == 1: # left lane
                 if random.random() > self.distribution[0]: path = (lane // 2, (lane // 2 + 1) % 4) # 90% chance of left turn
                 else: path = (lane // 2, lane // 2) # 10% chance of U turn
             else: # right lane
                 if random.random() > self.distribution[1]: path = (lane // 2, (lane // 2 + 2) % 4) # 80% chance of straight
                 else: path = (lane // 2, (lane // 2 + 3) % 4) # 20% chance of right turn
-            self.schedule(Car.Car(0, -self.radius, self.speed, path))
-            self.cooldown[lane] = 10 / self.speed + self.buffer # set cooldown for lane
+
+            if last != None: # calculate realistic spawn speed given previous car
+                dc, vc, a = last.distance, last.speed, last.acceleration
+                vs = (vc ** 2 + 2 * (dc + self.radius - (10 + 1.e-6)) * a) ** 0.5 # adjust so car can decelerate in time to keep a 10m gap
+                if isinstance(vs, complex): vs = self.speed
+
+            self.schedule(Car.Car(0, -self.radius, min(vs, self.speed), path)) # schedule car and set last spawn and cooldown for lane
 
 
     def tick(self, period):
         # updates properties based on period (ms)
-        self.time += period / 1000
+        self.time += period * 1.e-3
+        if self.spawn > 0: self.spawner(period) # run spawner if active
+
         for car in self.cars.copy():
             car.tick(period) # tick each car
             if car.distance - self.turnLength(car.path) > self.radius:
                 self.cars.remove(car) # remove cars that have cleared the intersection
-        
-        if self.spawn > 0: self.spawner(period) # run spawner if active
 
 
     def render(self):

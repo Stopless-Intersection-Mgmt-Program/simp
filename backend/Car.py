@@ -33,6 +33,14 @@ class Car:
             self.course = [[tc, tc + t, a], [tf - ((vc - vf) / a + t), tf, -a]]
 
 
+    def appendCourse(self, distance, time, speed):
+        # appends course to reach distance (m) at time (s) with speed (m/s)
+        dc, tc, vc, course = self.distance, self.time, self.speed, self.course # make copy of all properties
+        (self.distance, self.speed), self.time = self.atTime(self.course[-1][1]), self.course[-1][1] # set car to end of course
+        self.setCourse(distance, time, speed) # generate new course
+        self.distance, self.time, self.speed, self.course = dc, tc, vc, course + self.course # reset original properties with appended course
+
+
     def courseRanges(self, distance, speed):
         # returns array of times (s) that car could arrive at distance (m) with speed (m/s) for each course
         dc, df, tc, vc, vf, a = self.distance, distance, self.time, self.speed, speed, self.acceleration
@@ -41,14 +49,14 @@ class Car:
         # time range for +- course
         ts = ((2 * (vf ** 2 + vc ** 2 + 2 * a * (df - dc))) ** 0.5 - vf - vc + a * tc) / a
         tl = (vl ** 2 - 2 * vh * vl + vh ** 2 + 2 * a * tc * vh + 2 * a * (df - dc)) / (2 * a * vh)
-        ranges += [ts + 0.0000001, tl]
+        ranges += [ts + 1.e-8, tl]
 
         a = -a # switch acceleration sign
 
         # time range for -+ course
         ts = (vh ** 2 - 2 * vl * vh + vl ** 2 + 2 * a * tc * vl + 2 * a * (df - dc)) / (2 * a * vl)
-        tl = ((2 * (vf ** 2 + vc ** 2 + 2 * a * (df - dc))) ** 0.5 - vf - vc + a * tc) / a     
-        ranges += [ts, float('inf') if isinstance(tl, complex) else tl + 0.0000001]
+        tl = ((2 * (vf ** 2 + vc ** 2 + 2 * a * (df - dc))) ** 0.5 - vf - vc + a * tc) / a
+        ranges += [ts, float('inf') if isinstance(tl, complex) else tl - 1.e-8]
         return ranges
 
 
@@ -105,8 +113,8 @@ class Car:
 
     def tick(self, period):
         # updates properties based on period (ms)
-        self.distance, self.speed = self.atTime(self.time + period / 1000)
-        self.time += period / 1000
+        self.distance, self.speed = self.atTime(self.time + period * 1.e-3)
+        self.time += period * 1.e-3
 
 
     def render(self, size):
