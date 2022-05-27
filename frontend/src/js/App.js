@@ -28,7 +28,7 @@ const App = () => {
   let criticalState = {
     once:
     {
-      algorithmValue: algorithmValue,
+      algorithm: algorithmValue,
       layout: layoutMappings[intersectionValue]
     },
     continuous:

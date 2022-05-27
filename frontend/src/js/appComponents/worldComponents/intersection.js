@@ -3,7 +3,7 @@ let spawnBoxes = [];
 
 /* Convert intersection type to road mappings for rendering */
 const layoutMappings = {
-    '4-Way Intersection': [1, 3, 5, 7],
+    '4-Way Intersection': [0, 1, 2, 3],
     'T-Way Intersection': [1, 3, 5],
     'X-Way Intersection': [2, 4, 6, 8],
     'Multi-Way Intersection': [1, 2, 3, 4, 5, 6, 7, 8]
@@ -88,7 +88,7 @@ function RoadRenderer(props) {
     let degrees;
 
     layoutMappings[intersectionType].forEach((road) => {
-        degrees = (road - 1) * 45;
+        degrees = (road) * 90;
         coordinates = degreesToCoords(roadLength, degrees, roadWidth / 2);
         roadsToRender.push(
             <RoadComponent

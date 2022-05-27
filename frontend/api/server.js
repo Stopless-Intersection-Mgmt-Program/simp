@@ -37,8 +37,9 @@ app.post('/apiSetProcessInstance', async (req, res) => {
     }
     console.log("Process Started.")
     python = spawn('python3', ['-u', 'scheduler.py']);
-    console.log("using...", req.body)
+
     const sendInstance = req.body;
+    console.log("using...", JSON.stringify(sendInstance) + '\n')
     python.stdin.write(JSON.stringify(sendInstance) + '\n');
     res.send(await portData())
 })
