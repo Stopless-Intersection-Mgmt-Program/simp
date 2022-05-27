@@ -8,9 +8,9 @@ function setProcessInstance(state) {
 }
 
 /* Calls the api to return the next child_process tick */
-function updateTick() {
+function updateTick(state) {
     return axios
-        .get('http://localhost:3001/apiUpdateTick')
+        .post('http://localhost:3001/apiUpdateTick', state)
         .then((output) => { return output.data })
 }
 

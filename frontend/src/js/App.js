@@ -20,11 +20,33 @@ const App = () => {
   const [situationValue, setSituationValue] = useState('Any');
   const [intersectionValue, setIntersectionValue] = useState('4-Way Intersection');
   const [algorithmValue, setAlgorithmValue] = useState('First Come First Served');
+  const [speedLimit, setSpeedLimit] = useState(30);
+  const [playSpeed, setPlaySpeed] = useState(2);
+  const [bufferValue, setBufferValue] = useState(0);
+  const [spawnRate, setSpawnRate] = useState(1.5);
 
   let criticalState = {
-    state:
+    once:
     {
-      intersection: [93, layoutMappings[intersectionValue], algorithmValue, situationValue]
+      algorithmValue: algorithmValue,
+      layout: layoutMappings[intersectionValue]
+    },
+    continuous:
+    {
+      playSpeed: playSpeed,
+      spawnRate: spawnRate,
+      speedLimit: speedLimit,
+      buffer: bufferValue
+    }
+  }
+
+  let continuousState = {
+    continuous:
+    {
+      playSpeed: playSpeed,
+      spawnRate: spawnRate,
+      speedLimit: speedLimit,
+      buffer: bufferValue
     }
   }
 
@@ -40,8 +62,8 @@ const App = () => {
     Uses updateTick apicall, and updates returnState */
   useEffect(() => {
     const interval = setInterval(() => {
-      if (btnActive) { updateState(updateTick, null, setReturnState) }
-    }, 10);
+      if (btnActive) { updateState(updateTick, continuousState, setReturnState) }
+    }, 20);
     return () => clearInterval(interval);
   }, [returnState, btnActive]);
 
@@ -95,21 +117,46 @@ const App = () => {
           setValueForParent={setSituationValue}
           options={['Any', '3-Car Staggered', '3-Car Simultaneous', '... Add More']} />
 
-        {situationValue === 'Any' ?
-          <>
-            {/* Slider for populating cars */}
-            <label htmlFor='totalCars'>Total Cars: {numCars}</label>
-            <input
-              id='totalCars'
-              type='range'
-              min='0'
-              max='32'
-              step='1'
-              value={numCars}
-              onInput={(inputEvent) => setNumCars(inputEvent.target.value)} />
-          </>
-          :
-          null}
+        <label htmlFor='SpawnRate'>Spawn Rate: {spawnRate}</label>
+        <input
+          id='SpawnRate'
+          type='range'
+          min='0'
+          max='5'
+          step='.1'
+          value={spawnRate}
+          onInput={(inputEvent) => setSpawnRate(inputEvent.target.value)} />
+
+        <label htmlFor='SpeedLimit'>Speed Limit: {speedLimit}</label>
+        <input
+          id='SpeedLimit'
+          type='range'
+          min='0'
+          max='30'
+          step='1'
+          value={speedLimit}
+          onInput={(inputEvent) => setSpeedLimit(inputEvent.target.value)} />
+
+        <label htmlFor='Buffer'>Buffer: {bufferValue}</label>
+        <input
+          id='Buffer'
+          type='range'
+          min='0'
+          max='2'
+          step='.1'
+          value={bufferValue}
+          onInput={(inputEvent) => setBufferValue(inputEvent.target.value)} />
+
+        <label htmlFor='PlaySpeed'>Play Speed: {playSpeed}</label>
+        <input
+          id='PlaySpeed'
+          type='range'
+          min='1'
+          max='10'
+          step='1'
+          value={playSpeed}
+          onInput={(inputEvent) => setPlaySpeed(inputEvent.target.value)} />
+
 
         {/* Play Button */}
         <Button func={setBtnActive} arg={btnActive} name={btnActive ? "Pause" : "Begin"} />

@@ -37,18 +37,15 @@ app.post('/apiSetProcessInstance', async (req, res) => {
     }
     console.log("Process Started.")
     python = spawn('python3', ['-u', 'scheduler.py']);
-
-    const sendInstance = {
-        cars: req.body.state.cars,
-        intersection: req.body.state.intersection
-    };
+    console.log("using...", req.body)
+    const sendInstance = req.body;
     python.stdin.write(JSON.stringify(sendInstance) + '\n');
     res.send(await portData())
 })
 
-app.get('/apiUpdateTick', async (req, res) => {
-    console.log("Updating Tick...")
-    const sendUpdateSignal = {};
+app.post('/apiUpdateTick', async (req, res) => {
+    console.log("Updating Tick...", req.body)
+    const sendUpdateSignal = req.body;
     python.stdin.write(JSON.stringify(sendUpdateSignal) + '\n');
     res.send(await portData())
 })
