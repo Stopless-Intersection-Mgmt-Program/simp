@@ -17,13 +17,10 @@ app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-let jsonArray = [];
+//let jsonArray = [];
 
-const python = spawn('python3', ['-u', 'scheduler.py']);
-python.stdout.on('data', (data) => {
-    console.log("Python_Process Output:", data.toString())
-    jsonArray.push(data.toString())
-})
+let python = false;
+
 
 const portData = async () => {
     return new Promise((resolve, reject) => {
@@ -33,39 +30,28 @@ const portData = async () => {
     })
 }
 
-app.post('/apiStartProcess', async (req, res) => {
-    console.log("Json received for transfer");
-    const jsonOut = {
+app.post('/apiSetProcessInstance', async (req, res) => {
+    if (python) {
+        console.log("Process Restarting...")
+        python.kill('SIGINT')
+    }
+    console.log("Process Started.")
+    python = spawn('python3', ['-u', 'scheduler.py']);
+
+    const sendInstance = {
         cars: req.body.state.cars,
         intersection: req.body.state.intersection
     };
-    console.log(jsonOut);
-    python.stdin.write(JSON.stringify(jsonOut) + '\n');
-    console.log("json", jsonArray)
+    python.stdin.write(JSON.stringify(sendInstance) + '\n');
     res.send(await portData())
 })
 
-
-app.post('/apiPauseState', (req, res) => {
-    /*
-    console.log("Pause state received for transfer");
-    const jsonOut = {
-        pause: req.body.state.pause
-    }
-    python.stdin.write(JSON.stringify(jsonOut) + '\n');
-    console.log("json", jsonArray);
-    res.send(jsonArray);
-    */
+app.get('/apiUpdateTick', async (req, res) => {
+    console.log("Updating Tick...")
+    const sendUpdateSignal = {};
+    python.stdin.write(JSON.stringify(sendUpdateSignal) + '\n');
+    res.send(await portData())
 })
-
-app.post('/apiRestartState', (req, res) => {
-    python.on("close", function () {
-        // Wait for process to exit, then run again
-
-        python = spawn('python3', ['-u', 'scheduler.py']);
-    });
-})
-
 
 app.listen(PORT, () => {
     console.log(`Server Listening on ${PORT}`);

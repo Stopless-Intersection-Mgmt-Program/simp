@@ -41,6 +41,7 @@ class Intersection:
         car.course.append([tf, (self.speed - vf) / car.acceleration + tf, car.acceleration])
 
         # print("Set course:", car.speed, car.path, car.course)
+
         self.cars.append(car)
         self.last[lane] = car
 
