@@ -70,4 +70,5 @@ class TrafficLight(Intersection.Intersection):
 
     def render(self):
         # returns list of car ids, coordinates, and directions
-        cars = super().render()
+        render = super().render()
+        return render + ["new stuff"]
