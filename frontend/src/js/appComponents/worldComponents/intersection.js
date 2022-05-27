@@ -18,8 +18,10 @@ function degreesToCoords(radius, degrees, error) {
    renders traffic lights on roads if it is selected */
 const RenderTrafficLight = (props) => {
     let render = [];
-    if (props.algorithmValue === "Traffic Light") {
-        render.push(<span className='light' style={{ height: 6, width: 6 }}></span>);
+    if ('lanesCleared' in props.returnState) {
+        let laneCleared = props.returnState.lanesCleared[props.road]
+        let colorValue = laneCleared ? 'rgb(0,255,0)' : 'rgb(255,0,0)';
+        render.push(<span className='light' style={{ height: 6, width: 6, backgroundColor: { colorValue } }} />);
     }
 
     return render;
@@ -60,7 +62,7 @@ const RoadComponent = (props) => {
                     marginBottom: 0,
 
                 }} >
-                <RenderTrafficLight algorithmValue={props.algorithmValue}></RenderTrafficLight>
+                <RenderTrafficLight returnState={props.returnState} road={props.road}></RenderTrafficLight>
             </div>
             <div className="lane"
                 style={{
@@ -68,7 +70,7 @@ const RoadComponent = (props) => {
                     marginTop: 2,
                     marginBottom: 0,
                 }} >
-                <RenderTrafficLight algorithmValue={props.algorithmValue}></RenderTrafficLight>
+                <RenderTrafficLight returnState={props.returnState} road={props.road} ></RenderTrafficLight>
             </div>
         </div >
 
@@ -79,7 +81,7 @@ function RoadRenderer(props) {
     const roadWidth = .15 * props.worldWidth;
     const roadLength = props.worldHeight / 2;
     const intersectionType = props.intersectionType;
-
+    console.log(props.returnState);
     roadsToRender = [];
     spawnBoxes = [];
     let coordinates = [];
@@ -95,7 +97,8 @@ function RoadRenderer(props) {
                 spacingTop={coordinates[1]}
                 roadWidth={roadWidth}
                 roadLength={roadLength}
-                algorithmValue={props.algorithmValue} />);
+                returnState={props.returnState}
+                road={road} />);
     })
     return (roadsToRender)
 }

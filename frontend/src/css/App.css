@@ -92,7 +92,6 @@ body {
 
 /* Styling for traffic light */
 .light {
-  background-color: red;
   position: relative;
   top: -8px;
   left: 95px;

@@ -64,6 +64,7 @@ const App = () => {
         vh={vh}
         vw={vw}
         intersectionType={intersectionValue}
+        algorithmType={algorithmValue}
         numCars={numCars}
         btnActive={btnActive}
         returnState={returnState} />

@@ -4,7 +4,7 @@ import json
 sys.path.append('../../backend')
 import Intersection
 
-intersection = Intersection.Intersection(0, 2)
+intersection = Intersection.Intersection(0,1)
 intersectionProps = None
 
 while True:
@@ -18,7 +18,7 @@ while True:
                 intersectionProps = dicIn["intersection"]
             
             # Write Out
-            intersection.tick(25)
+            intersection.tick(35)
             dicOut = {"cars" : intersection.render()}
             print(json.dumps(dicOut))
 

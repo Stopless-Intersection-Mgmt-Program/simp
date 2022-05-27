@@ -5,6 +5,7 @@ import CarManager from './worldComponents/cars.js'
     and roadComponent, acts as the parent div of all car divs, roads, and lanes. 
     (Remember: set worldWidth, and worldHeight as a proportion of the
                max screen viewport not a default value.) */
+
 const World = (props) => {
     return (
         <>

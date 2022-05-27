@@ -16,15 +16,15 @@ function detectCollision(r1, r2) {
     renders a car object with coordinates/angle/startPoint/endPoint dependent on the Car Spawner,
     generates carid, car dimensions, speed, */
 const CarComponent = (props) => {
-    console.log(props.speed, `hsl(0, 100%, ${((props.speed / 30) * .5 + .5) * 100 + '%'}})`)
+    let scale = 2.2325
     return (
         <div className="car"
             style={{
                 carID: props.carID,
                 height: 2 * 2.2325,
                 width: 4 * 2.2325, //Will generate random dimensions in sprint 4 
-                left: props.left - 4 * 2.2325 / 2,
-                top: props.top - 2 * 2.2325 / 2,
+                left: props.left - 5.5 * 2.2325 / 2,
+                top: props.top - 3 * 2.2325 / 2,
                 transform: `rotate(${props.angle})`,
                 backgroundColor: `hsl(0, 100%, ${((props.speed / 30) * .5 + .5) * 100 + '%'})`
             }}>
