@@ -32,6 +32,9 @@ class Car:
             t = (math.copysign(1, -a) * (2 * (vc + a * (tf - tc)) * vf - vf ** 2 + 2 * a * (tf - tc) * vc - vc ** 2 + a ** 2 * (tf ** 2 - 2 * tc * tf + tc ** 2) - 4 * a * (df - dc)) ** 0.5 + (vf - vc) + a * (tf - tc)) / (2 * a)
             self.course = [[tc, tc + t, a], [tf - ((vc - vf) / a + t), tf, -a]]
 
+        # else:
+        #     print("No course set", dc, df, vc, vf)
+        #     exit()
 
     def appendCourse(self, distance, time, speed):
         # appends course to reach distance (m) at time (s) with speed (m/s)
@@ -39,6 +42,43 @@ class Car:
         (self.distance, self.speed), self.time = self.atTime(self.course[-1][1]), self.course[-1][1] # set car to end of course
         self.setCourse(distance, time, speed) # generate new course
         self.distance, self.time, self.speed, self.course = dc, tc, vc, course + self.course # reset original properties with appended course
+
+
+    def followTo(self, car, distance, time, speed):
+        # sets course to reach distance (m) at time (s) with speed (m/s) without ever being in front of car
+        tc, vc, vco = self.time, self.speed, car.speed if car != None else 0
+        self.setCourse(distance, time, speed) # set initial course assuming no collisions
+        if car == None: return # no car to follow
+
+        cm = [] # merge courses into single list of lists with start time, end time, and both acceleration values
+        ts, a, ao, ci, cio = 0, 0, 0, 0, 0
+        while ci < len(self.course) * 2: # loop through course nodes and merge other car course
+            tn, tno = self.course[ci // 2][ci % 2], float('inf') if cio >= len(car.course) * 2 else car.course[cio // 2][cio % 2]
+            if tn < tno: ci, te = ci + 1, tn # check which course node comes next and increment index and set end time
+            else: cio, te = cio + 1, tno
+
+            if ts != te and te > tc: cm.append([max(tc, ts), te, a, ao]) # only add if course length is greater than zero
+            a = self.course[ci // 2][2] if ci % 2 == 1 else 0 # update acceleration values for next node
+            ao = car.course[cio // 2][2] if cio % 2 == 1 else 0
+            ts = te # increment start time
+
+        for ts, te, a, ao in cm: # loop through combined course nodes
+            if ts >= time: return # ignore nodes beyond final time
+            vf, vfo = (te - ts) * a + vc, (te - ts) * ao + vco
+            if vc - vco >= 0 and vf - vfo <= 0 and a - ao != 0: # if velocities intersect in this node
+                ti = (vco - vc) / (a - ao) + ts # calculate time of intersection
+                dio, vio = car.atTime(ti) # calculate other car's position and speed at intersection time
+                if self.atTime(ti)[0] > dio - 10: # if car is closer than 10m                
+                    if abs((dio - 10) - distance) < 1.e-6: return # margin of error for final distance
+                    self.setCourse(dio - (10 + 1.e-6), ti, vio) # adjust course to be behind other car
+                    self.appendCourse(distance, time, speed) # append course for final distance, time, and speed
+
+                    # dc, tc, vc, course = self.distance, self.time, self.speed, self.course # make copy of all properties
+                    # (self.distance, self.speed), self.time = self.atTime(self.course[-1][1]), self.course[-1][1] # set car to end of course
+                    # self.followTo(car, distance, time, speed) # recurse
+                    # self.distance, self.time, self.speed, self.course = dc, tc, vc, course + self.course # reset original properties with appended course
+                    return
+            vc, vco = vf, vfo # otherwise, adjust speeds and continue
 
 
     def courseRanges(self, distance, speed):
@@ -70,7 +110,6 @@ class Car:
         # returns time (s) and speed (m/s) when car is at distance (m)
         dc, df, tc, vc = self.distance, distance, self.time, self.speed
         if distance < dc: return None
-        if self.course == []: return (df - dc) / vc, vc # no course
         for course in self.course: # loop through course nodes
             cs, ce, ca = course
 
@@ -84,9 +123,9 @@ class Car:
                 if dc + d > df: return tc + ((2 * ca * (df - dc) + vc ** 2) ** 0.5 - vc) / ca, (vc ** 2 + 2 * ca * (df - dc)) ** 0.5
                 tc, dc, vc = tc + t, dc + d, vc + ca * t
 
-        if tc >= ce: # after acceleration period
-            if vc == 0: return float('inf'), 0
-            return tc + (df - dc) / vc, vc
+        # after acceleration period
+        if vc == 0: return float('inf'), 0
+        return tc + (df - dc) / vc, vc
 
 
     def atTime(self, time):
