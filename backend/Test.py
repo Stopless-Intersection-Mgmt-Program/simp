@@ -1,7 +1,6 @@
 import tkinter as tk
 import Car
 import Intersection
-import Traffic
 import TrafficLight
 
 # create window and canvas
