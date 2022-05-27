@@ -40,7 +40,7 @@ class Intersection:
         tf, vf = car.atDistance(dt)
         car.course.append([tf, (self.speed - vf) / car.acceleration + tf, car.acceleration])
 
-        # print("Set course:", car.speed, car.path, car.course)
+        # print("Set course:", car.path, car.course)
 
         self.cars.append(car)
         self.last[lane] = car
@@ -164,8 +164,10 @@ class Intersection:
 
 
     def render(self):
-        # returns list of car ids, coordinates, and directions
-        return [[car.id] + list(car.render(self.size)) + [car.speed] for car in self.cars]
+        # returns list of car details and statistics
+        cars = [[car.id] + list(car.render(self.size)) + [car.speed] for car in self.cars]
+        stats = {"waitTime": 0, "throughput": 0, "averageSpeed": 0}
+        return {"cars": cars, "statistics": stats}
 
 
     def tkrender(self, canvas, scale):
