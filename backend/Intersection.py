@@ -17,29 +17,35 @@ class Intersection:
         random.seed(0) # seed the spawner for testing consistency
         self.distribution = [0.1, 0.2] # probability of a U turn and right turn
 
-        # if self.spawn != 0: self.speed = 60 / (self.spawn + 1)
+        # if self.spawn != 0: self.speed = 60 / (self.spawn + 1) # adjust speed for traffic
 
 
     def schedule(self, car):
         # adds car for intersection to handle
         car.time = self.time # synchronize clocks
-        vt, dt = self.turnSpeed(car), self.turnLength(car.path)
+        vt, dt, lane = self.turnSpeed(car), self.turnLength(car.path), self.turnLanes(car.path)[0]
 
         # loop through other cars and set car to arrive after each
         ta = max(self.earliestArrival(car, other) for other in self.cars) if len(self.cars) > 0 else 0
-        self.followLast(car, ta)
+
+        # if self.last[lane] != None:
+        #     if self.last[lane].path != car.path or self.last[lane].course[-2][1] < self.time: df = 0
+        #     else: df = self.last[lane].atTime(self.last[lane].course[-2][1])[0] - 10
+        #     car.followTo(self.last[lane], df, ta - (0 - df) / vt, vt)
+        # else: car.setCourse(0, ta, vt)
+        
+        car.followTo(self.last[lane], 0, ta, vt)
 
         # set car to accelerate to intersection speed once clear of intersection
         tf, vf = car.atDistance(dt)
         car.course.append([tf, (self.speed - vf) / car.acceleration + tf, car.acceleration])
 
-        #print("Set course:", car.path, car.course)
+        # print("Set course:", car.speed, car.path, car.course)
 
         self.cars.append(car)
-        self.last[self.turnLanes(car.path)[0]] = car
+        self.last[lane] = car
 
         # tf, vf = car.atDistance(0)
-        # print(tf, car.course[-2][1])
         # if tf < ta - 1.e-6 or abs(vt - vf) > 1.e-6:
         #     print(ta, tf, vt, vf)
         #     exit()
@@ -60,50 +66,6 @@ class Intersection:
             ta += (vt - vto) / a - (vt ** 2 - vto ** 2) / (2 * a * vf) - (dt - 10) / vt
 
         return ta + self.buffer
-
-
-    def followLast(self, car, time):
-        # sets car to arrive at intersection at time (s) without colliding with the car in front of it
-        last = self.last[self.turnLanes(car.path)[0]]
-        ta, vt, a = time, self.turnSpeed(car), car.acceleration
-        car.setCourse(0, ta, vt)
-        if last == None or last.course[1][1] < self.time: return
-
-        vtl = self.turnSpeed(last)
-        if vt == vtl:
-            di, vi = last.atTime(last.course[1][1])
-            ti = max(last.course[1][1], ta - (10 - di) / vt)
-            if ti < car.rangeTo(di - 10, vi)[1]: car.setCourse(di - 10, ti, vi)
-
-        if vt < vtl:
-            vi = (vtl - (last.course[1][1] - last.course[1][0]) * last.course[1][2])
-            ta = max(ta, last.course[1][1] + (2 * vi ** 2 - 2 * (vtl + vt) * vi + vtl ** 2 + vt ** 2) / (2 * a * vi) + 10 / vt)
-            car.setCourse(0, ta, vt)
-
-
-        # last = self.last[self.turnLanes(car.path)[0]]
-        # dc, df, ta, vt, vc, a = car.distance, 0, time, self.turnSpeed(car), car.speed, car.acceleration
-        # car.setCourse(0, ta, vt)
-        # if last == None or last.course[1][0] < self.time or last.atTime(last.course[1][0])[1] > car.atTime(car.course[1][0])[1] or vt > self.turnSpeed(last): return
-
-        # ti, (di, vi) = last.course[1][1], last.atTime(last.course[1][1])
-        # car.setCourse(di - 10, ti, vi)
-        # if len(last.course) == 4:
-        #     return car.course.append([car.course[1][1], car.course[1][1] + abs(vt - vi) / a, math.copysign(a, vt - vi)])
-
-        # if vt < self.turnSpeed(last):
-        #     ts = ((2 * (vt ** 2 + 2 * a * (df - (di - 10)) + vi ** 2)) ** 0.5 + 2 * a * ti - 2 * vi) / (2 * a)
-        #     if ts < last.course[1][0]: return car.setCourse(0, ta, vt)
-        #     vs = car.atTime(ts)[1]
-        #     car.course[1][1] = ts
-        #     car.course.append([ts, ts + abs(vt - vs) / a, math.copysign(a, vt - vs)])
-
-        #     di, vi = last.atTime(last.course[1][0])
-        #     dm = df - abs(vt ** 2 - vi ** 2) / (2 * a)
-        #     if di > dm:
-        #         di, ti = dm, last.atDistance(dm + 10)[0]
-        #         car.setCourse(di, ti, vi)
-        #         car.course.append([car.course[1][1], car.course[1][1] + abs(vt - vi) / a, math.copysign(a, vt - vi)])
 
 
     def turnLanes(self, path):
