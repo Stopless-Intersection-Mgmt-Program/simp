@@ -1,8 +1,5 @@
 import Intersection
 
-# Fix:
-# - U turns and right turns
-
 class TrafficLight(Intersection.Intersection):
     def __init__(self, buffer, spawn = 0):
         self.lanes = [[], [], [], [], [], [], [], []] # list of cars waiting in each lane
@@ -56,7 +53,7 @@ class TrafficLight(Intersection.Intersection):
             tf = max(car.course[-1][1], car.atDistance(dt)[0])
             car.course.append((tf, (self.speed - vt) / car.acceleration + tf, car.acceleration))
 
-            print("Set course:", car.path, car.course)
+            # print("Set course:", car.path, car.course)
             wait, last = car.atDistance(self.turnLength(car.path))[0] - self.time, car
         self.lights[lane], self.tail[lane] = wait, (last, df)
         
@@ -69,6 +66,7 @@ class TrafficLight(Intersection.Intersection):
 
 
     def render(self):
-        # returns list of car ids, coordinates, and directions
+        # returns dictionary of car details, statistics, and traffic light states
         render = super().render()
-        return render + ["new stuff"]
+        render["lanesCleared"] = [0, 0, 0, 0, 0, 0, 0, 0] # append current traffic light states
+        return render
