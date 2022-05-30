@@ -16,7 +16,7 @@ class Intersection:
         self.spawn = spawn # average cars per second for spawner
         random.seed(0) # seed the spawner for testing consistency
         self.distribution = [0.1, 0.2] # probability of a U turn and right turn
-        self.throughput = [0] * 100
+        self.throughput = [[0, 0]] * 51
         self.countT = 0
 
         # if self.spawn != 0: self.speed = 60 / (self.spawn + 1) # adjust speed for traffic
@@ -159,27 +159,29 @@ class Intersection:
         self.time += period * 1.e-3
         if self.spawn > 0: self.spawner(period) # run spawner if active
 
-        self.throughput[self.countT] = 0
+        self.throughput[self.countT] = [self.time, 0]
         for car in self.cars.copy():
             car.tick(period) # tick each car
             if not car.countT and car.distance > 0:
                 car.countT = True
-                self.throughput[self.countT] += 1
+                self.throughput[self.countT][1] += 1
             if car.distance - self.turnLength(car.path) > self.radius:
                 self.cars.remove(car) # remove cars that have cleared the intersection
-        self.countT = (1 + self.countT) % 100
-        self.render()
+        self.countT = (1 + self.countT) % 51
 
 
     def render(self):
         # returns list of car details and statistics
         cars = [[car.id] + list(car.render(self.size)) + [car.speed] for car in self.cars]
-        stats = {"waitTime": 0, "throughput": sum(self.throughput), "averageSpeed": 0}
+        stats = {"waitTime": 0, "throughput": 0, "averageSpeed": 0}
         for car in self.cars:
             if not car.countT:
                 stats["waitTime"] += car.time
         if len(self.cars) > 0:
             stats["averageSpeed"] = sum([car.speed for car in self.cars]) / len(self.cars)
+        for t in self.throughput:
+            if t[0] >= self.time - 1:
+                stats["throughput"] += t[1]
         return {"cars": cars, "statistics": stats}
 
 
