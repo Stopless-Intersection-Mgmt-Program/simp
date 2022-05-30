@@ -1,4 +1,4 @@
-#simp
+# Stopless Intersection Management Contributing
 
 Guide to Contributing to Source Repositories
 
