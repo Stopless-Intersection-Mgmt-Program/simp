@@ -4,9 +4,8 @@ let spawnBoxes = [];
 /* Convert intersection type to road mappings for rendering */
 const layoutMappings = {
     '4-Way Intersection': [0, 1, 2, 3],
-    'T-Way Intersection': [1, 3, 5],
-    'X-Way Intersection': [2, 4, 6, 8],
-    'Multi-Way Intersection': [1, 2, 3, 4, 5, 6, 7, 8]
+    'T-Way Intersection': [0, 1, 2],
+    'T-Way Flipped': [0, 2, 3]
 };
 
 function degreesToCoords(radius, degrees, error) {
@@ -17,11 +16,11 @@ function degreesToCoords(radius, degrees, error) {
 /* RenderTrafficLight checks if 'Traffic Light' is selected in algorithm dropdown menu
    renders traffic lights on roads if it is selected */
 const RenderTrafficLight = (props) => {
-    let render = [];
-    if ('lanesCleared' in props.returnState) {
+    let render;
+    if (props.returnState.lanesCleared != undefined) {
         let laneCleared = props.returnState.lanesCleared[props.road]
         let colorValue = laneCleared ? 'rgb(0,255,0)' : 'rgb(255,0,0)';
-        render.push(<span className='light' style={{ height: 6, width: 6, backgroundColor: { colorValue } }} />);
+        render = (<span className='light' style={{ height: 6, width: 6, backgroundColor: { colorValue } }} />);
     }
 
     return render;
@@ -81,17 +80,17 @@ function RoadRenderer(props) {
     const roadWidth = .15 * props.worldWidth;
     const roadLength = props.worldHeight / 2;
     const intersectionType = props.intersectionType;
-    console.log(props.returnState);
     roadsToRender = [];
     spawnBoxes = [];
     let coordinates = [];
     let degrees;
 
-    layoutMappings[intersectionType].forEach((road) => {
+    layoutMappings[intersectionType].forEach((road, index) => {
         degrees = (road) * 90;
         coordinates = degreesToCoords(roadLength, degrees, roadWidth / 2);
         roadsToRender.push(
             <RoadComponent
+                key={index}
                 degrees={degrees + 'deg'}
                 spacingLeft={coordinates[0]}
                 spacingTop={coordinates[1]}

@@ -17,38 +17,39 @@ app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-//let jsonArray = [];
-
-let python = false;
-
+python = false;
 
 const portData = async () => {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
         python.stdout.once('data', resolve)
-        python.stdout.once('error', reject)
-
     })
 }
 
-app.post('/apiSetProcessInstance', async (req, res) => {
+const initializeProcess = (process) => {
     if (python) {
         console.log("Process Restarting...")
         python.kill('SIGINT')
     }
     console.log("Process Started.")
     python = spawn('python3', ['-u', 'scheduler.py']);
+}
+
+app.post('/apiSetProcessInstance', (req, res) => {
+    initializeProcess(python);
 
     const sendInstance = req.body;
-    console.log("using...", JSON.stringify(sendInstance) + '\n')
     python.stdin.write(JSON.stringify(sendInstance) + '\n');
-    res.send(await portData())
+
+    portData()
+        .then((updatedTick) => res.send(updatedTick));
 })
 
-app.post('/apiUpdateTick', async (req, res) => {
-    console.log("Updating Tick...", req.body)
+app.post('/apiUpdateTick', (req, res) => {
     const sendUpdateSignal = req.body;
     python.stdin.write(JSON.stringify(sendUpdateSignal) + '\n');
-    res.send(await portData())
+
+    portData()
+        .then((updatedTick) => res.send(updatedTick))
 })
 
 app.listen(PORT, () => {

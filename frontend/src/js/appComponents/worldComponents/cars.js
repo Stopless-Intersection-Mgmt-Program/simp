@@ -46,25 +46,28 @@ const CarManager = (props) => {
             if (!returnCars) {
                 return spawnedCars
             }
-            spawnedCars = [];
-            returnCars.cars.forEach((car) => {
-                let newCar = {
-                    x: car[1] * 2.325 + 300,
-                    y: -1 * car[2] * 2.2325 + 300,
-                    width: 4 * 2.2325,
-                    height: 2 * 2.2325
-                }
-                if (detectCollision(newCar, world)) {
-                    spawnedCars.push(
-                        <CarComponent
-                            carID={car[0]}
-                            left={newCar.x}
-                            top={newCar.y}
-                            angle={-1 * car[3] + 'rad'}
-                            speed={car[4]} />
-                    )
-                }
-            })
+            else {
+                spawnedCars = [];
+                returnCars.cars.forEach((car, index) => {
+                    let newCar = {
+                        x: car[1] * 2.325 + 300,
+                        y: -1 * car[2] * 2.2325 + 300,
+                        width: 4 * 2.2325,
+                        height: 2 * 2.2325
+                    }
+                    if (detectCollision(newCar, world)) {
+                        spawnedCars.push(
+                            <CarComponent
+                                key={index}
+                                carID={car[0]}
+                                left={newCar.x}
+                                top={newCar.y}
+                                angle={-1 * car[3] + 'rad'}
+                                speed={car[4]} />
+                        )
+                    }
+                })
+            }
         }
         fetchState()
     }, [props.returnState])

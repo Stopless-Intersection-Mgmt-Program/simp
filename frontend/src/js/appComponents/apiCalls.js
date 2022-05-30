@@ -18,7 +18,6 @@ function updateTick(state) {
 const updateState = (apiCall, state, setState) => {
     apiCall(state).then((returnState) => {
         setState(returnState)
-        console.log("process returned", returnState)
     })
 }
 

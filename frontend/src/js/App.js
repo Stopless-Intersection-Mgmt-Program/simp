@@ -21,7 +21,7 @@ const App = () => {
   const [intersectionValue, setIntersectionValue] = useState('4-Way Intersection');
   const [algorithmValue, setAlgorithmValue] = useState('First Come First Served');
   const [speedLimit, setSpeedLimit] = useState(30);
-  const [playSpeed, setPlaySpeed] = useState(2);
+  const [playSpeed, setPlaySpeed] = useState(4);
   const [bufferValue, setBufferValue] = useState(0);
   const [spawnRate, setSpawnRate] = useState(1.5);
 
@@ -41,6 +41,11 @@ const App = () => {
   }
 
   let continuousState = {
+    once:
+    {
+      algorithm: algorithmValue,
+      layout: layoutMappings[intersectionValue]
+    },
     continuous:
     {
       playSpeed: playSpeed,
@@ -56,16 +61,16 @@ const App = () => {
     Using the setProcessInstance api call. Updates returnState  */
   useEffect(() => {
     updateState(setProcessInstance, criticalState, setReturnState)
-  }, [intersectionValue, situationValue, algorithmValue])
+  }, [intersectionValue, algorithmValue])
 
-  /* Updates python3 child process on a 10ms interval to receive updated car positions.
+  /* Updates python3 child process on a 20ms interval to receive updated car positions.
     Uses updateTick apicall, and updates returnState */
   useEffect(() => {
     const interval = setInterval(() => {
-      if (btnActive) { updateState(updateTick, continuousState, setReturnState) }
+      if (btnActive) updateState(updateTick, continuousState, setReturnState);
     }, 20);
     return () => clearInterval(interval);
-  }, [returnState, btnActive]);
+  }, [returnState, btnActive, playSpeed]);
 
 
   return (
@@ -105,17 +110,12 @@ const App = () => {
         <DropDown
           name='Algorithm:'
           setValueForParent={setAlgorithmValue}
-          options={['First Come First Served', 'Traffic Light', 'Priority Scheduling', 'Round Robin', '... Add More']} />
+          options={['First Come First Served', 'Traffic Light']} />
 
         <DropDown
           name='Intersection:'
           setValueForParent={setIntersectionValue}
-          options={['4-Way Intersection', 'T-Way Intersection', 'X-Way Intersection', 'Multi-Way Intersection', '... Add More']} />
-
-        <DropDown
-          name='Situation:'
-          setValueForParent={setSituationValue}
-          options={['Any', '3-Car Staggered', '3-Car Simultaneous', '... Add More']} />
+          options={['4-Way Intersection', 'T-Way Intersection', 'T-Way Flipped']} />
 
         <label htmlFor='SpawnRate'>Spawn Rate: {spawnRate}</label>
         <input
@@ -125,17 +125,17 @@ const App = () => {
           max='5'
           step='.1'
           value={spawnRate}
-          onInput={(inputEvent) => setSpawnRate(inputEvent.target.value)} />
+          onInput={(inputEvent) => setSpawnRate(parseInt(inputEvent.target.value))} />
 
         <label htmlFor='SpeedLimit'>Speed Limit: {speedLimit}</label>
         <input
           id='SpeedLimit'
           type='range'
-          min='0'
+          min='1'
           max='30'
           step='1'
           value={speedLimit}
-          onInput={(inputEvent) => setSpeedLimit(inputEvent.target.value)} />
+          onInput={(inputEvent) => setSpeedLimit(parseInt(inputEvent.target.value))} />
 
         <label htmlFor='Buffer'>Buffer: {bufferValue}</label>
         <input
@@ -143,9 +143,9 @@ const App = () => {
           type='range'
           min='0'
           max='2'
-          step='.1'
+          step='0.01'
           value={bufferValue}
-          onInput={(inputEvent) => setBufferValue(inputEvent.target.value)} />
+          onInput={(inputEvent) => setBufferValue(parseInt(inputEvent.target.value))} />
 
         <label htmlFor='PlaySpeed'>Play Speed: {playSpeed}</label>
         <input
@@ -155,7 +155,7 @@ const App = () => {
           max='10'
           step='1'
           value={playSpeed}
-          onInput={(inputEvent) => setPlaySpeed(inputEvent.target.value)} />
+          onInput={(inputEvent) => setPlaySpeed(parseInt(inputEvent.target.value))} />
 
 
         {/* Play Button */}
