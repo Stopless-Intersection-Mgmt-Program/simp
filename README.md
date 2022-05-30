@@ -2,7 +2,7 @@
 # About
 
 The Stopless Intersection Management Project is an autonomous car scheduler meant to model and improve car throughput using the standard traffic-light intersection as a baseline for performance. 
-![gif](sim.gif)
+[![Autonomous Scheduler Performance Comparison](https://res.cloudinary.com/marcomontalbano/image/upload/v1653888564/video_to_markdown/images/youtube--d2RdmDHXHd4-c05b58ac6eb4c4700831b2b3070cd403.jpg)](https://youtu.be/d2RdmDHXHd4 "Autonomous Scheduler Performance Comparison")
 
 # Installation
 ```
