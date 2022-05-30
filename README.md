@@ -16,4 +16,4 @@ You must have npm (Node Package Manager) or alternatives (yarn, nvm, etc) for in
 
 # Contributing
 
-See [`CONTRIBUTING.md`](./CONTRIBUTING.md).
+See [`contributing.md`](./contributing.md).
