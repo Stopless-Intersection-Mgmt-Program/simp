@@ -69,4 +69,7 @@ class TrafficLight(Intersection.Intersection):
         # returns dictionary of car details, statistics, and traffic light states
         render = super().render()
         render["lanesCleared"] = [0, 0, 0, 0, 0, 0, 0, 0] # append current traffic light states
+        for i in range(8):
+            if self.lights[i] > 0:
+                render["lanesCleared"][i] = 1
         return render
