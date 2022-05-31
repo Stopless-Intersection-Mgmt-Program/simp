@@ -34,7 +34,6 @@ class TrafficLight(Intersection.Intersection):
             self.tail[self.current] = (None, 0)
 
 
-
     def green(self, lane):
         # sets cars in lane to go and sets the cooldown for when the last car clears the intersection
         wait, (last, df) = self.lights[lane], self.tail[lane]
@@ -68,8 +67,11 @@ class TrafficLight(Intersection.Intersection):
     def render(self):
         # returns dictionary of car details, statistics, and traffic light states
         render = super().render()
+
+        order = [4, 0, 3, 1, 5, 7, 2, 6]
         render["lanesCleared"] = [0, 0, 0, 0, 0, 0, 0, 0] # append current traffic light states
-        for i in range(8):
-            if self.lights[i] > 0:
-                render["lanesCleared"][i] = 1
+        render["lanesCleared"][self.current] = 1
+        if (self.current // 2) % 2 == (order[self.current] // 2) % 2:
+            render["lanesCleared"][order[self.current]] = 1
+        
         return render
