@@ -69,9 +69,10 @@ class TrafficLight(Intersection.Intersection):
         render = super().render()
 
         order = [4, 0, 3, 1, 5, 7, 2, 6]
-        render["lanesCleared"] = [0, 0, 0, 0, 0, 0, 0, 0] # append current traffic light states
+        lights = [0, 0, 0, 0, 0, 0, 0, 0] # append current traffic light states
         render["lanesCleared"][self.current] = 1
         if (self.current // 2) % 2 == (order[self.current] // 2) % 2:
             render["lanesCleared"][order[self.current]] = 1
-        
+        lights = [[lights[i], lights[i + 1]] for i in range(0, 8, 2)]
+        render["lanesCleared"] = lights
         return render
