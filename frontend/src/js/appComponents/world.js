@@ -1,11 +1,10 @@
 import { Intersection } from './worldComponents/intersection.js'
 import CarManager from './worldComponents/cars.js'
 
-/* worldComponent passes all dimension props to intersectionComponent,
+/* World 
+    passes all dimension props to intersectionComponent,
     and roadComponent, acts as the parent div of all car divs, roads, and lanes. 
-    (Remember: set worldWidth, and worldHeight as a proportion of the
-               max screen viewport not a default value.) */
-
+    (Reminder: World dimensions must be 600x600 to ensure proper scaling for data passed from backend) */
 const World = (props) => {
     return (
         <>
@@ -13,9 +12,8 @@ const World = (props) => {
                 style={{
                     height: props.worldHeight,
                     width: props.worldWidth,
-                    position: 'absolute',
-                    top: .20 * props.vh,
-                    left: .30 * props.vw,
+                    position: 'relative',
+                    marginLeft: '4%',
                 }}>
                 <Intersection {...props} />
                 <CarManager {...props} />

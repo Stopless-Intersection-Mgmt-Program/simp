@@ -81,7 +81,6 @@ function RoadRenderer(props) {
     const roadLength = props.worldHeight / 2;
     const intersectionType = props.intersectionType;
     roadsToRender = [];
-    spawnBoxes = [];
     let coordinates = [];
     let degrees;
 
@@ -114,7 +113,7 @@ const Intersection = (props) => {
                     width: intersectionLength - 1,
                     marginTop: (props.worldHeight - intersectionLength) / 2,
                     marginLeft: (props.worldWidth - intersectionLength) / 2,
-                    intersectionType: props.intersectionType
+                    intersectionType: props.intersectionType,
                 }} />
             <RoadRenderer {...props}></RoadRenderer>
         </>

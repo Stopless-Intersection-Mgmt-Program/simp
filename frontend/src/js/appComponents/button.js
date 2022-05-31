@@ -3,7 +3,7 @@ const Button = (props) => {
         <div
             id='btn'
             className='btn'
-            width="100%"
+            width="auto"
             onClick={(event) => { Array.isArray(props.arg) ? props.func(props.arg[0], props.arg[1], props.arg[2]) : props.func(!props.arg) }}>
             {props.name}
         </div>

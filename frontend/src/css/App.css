@@ -1,5 +1,5 @@
 #root {
-  width: 100%;
+  width: 100vw;
   height: 100vh;
   background: #002c36;
 
@@ -22,9 +22,10 @@ body {
 .settingsWrapper {
   margin: 0;
   display: flex;
+  height: auto;
   flex-direction: column;
-  align-items: center;
-  margin-left: 71%;
+  align-items: left;
+  margin-top: 17.5vh;
   padding: 5%;
   gap: 15px;
 }
@@ -34,6 +35,8 @@ body {
   padding-top: 1%;
   background-color: #10363F;
   border-radius: 25px;
+  border-color: #0d2a31;
+  border-width: 100px;
   box-sizing: border-box;
   border-color: transparent;
   color: #80959B;
@@ -50,15 +53,7 @@ body {
 
 .dropDown {
   background-color: #10363F;
-  border-radius: 25px;
-  box-sizing: border-box;
-  border-color: transparent;
   color: #80959B;
-  font-size: 18px;
-  height: 30px;
-  outline: 0;
-  width: 100%;
-  text-align: center;
 }
 
 .intersection {
