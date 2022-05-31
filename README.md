@@ -16,6 +16,7 @@ The Stopless Intersection Management Project is an autonomous car scheduler mean
 ```
 ## Dependencies
 You must have npm (Node Package Manager) or alternatives (yarn, nvm, etc) for installing package dependencies. Ideally the latest version of Node.js, React.js, and python3.
+**Operating System must have python3 as a terminal command**
 
 # Contributing
 
