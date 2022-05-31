@@ -8,6 +8,7 @@ class Intersection:
         self.speed = 30 # speed (m/s) of cars entering and exiting the intersection
         self.radius = 301 # distance (m) at which cars get spawned and despawned
         self.buffer = buffer # gap (s) added between cars travelling through intersection
+        self.directions = [0, 1, 2, 3] # directions of intersection
 
         self.time = 0 # clock to track time (s) elapsed
         self.cars = [] # list of cars monitored by the intersection
@@ -133,7 +134,7 @@ class Intersection:
 
 
     def spawner(self, period):
-        # based on the array of distributions for the 4 turns, randomly spawns cars and schedules them    
+        # based on the array of distributions for the 4 turns, randomly spawns cars and schedules them  
         for lane in range(8): # loop through each lane
             last, vs = self.last[lane], self.speed
             if last != None and last.distance < -self.radius + 10: continue # wait for last to clear spawn box
@@ -145,6 +146,8 @@ class Intersection:
             else: # right lane
                 if random.random() > self.distribution[1]: path = (lane // 2, (lane // 2 + 2) % 4) # 80% chance of straight
                 else: path = (lane // 2, (lane // 2 + 3) % 4) # 20% chance of right turn
+
+            if path[0] not in self.directions or path[1] not in self.directions: return # check if path is valid
 
             if last != None: # calculate realistic spawn speed given previous car
                 dc, vc, a = last.distance, last.speed, last.acceleration

@@ -24,7 +24,7 @@ while True:
                 elif algorithm == "Traffic Light": intersection = TrafficLight.TrafficLight(0, 0)
                 elif algorithm == "Round Robin (Beta)": intersection = RoundRobin.RoundRobin(0, 0)
                 else: exit() # terminate if algorithm is not one of these
-                intersection.layout = onceProps["layout"] # set layout
+                intersection.directions = onceProps["layout"] # set layout
             
             if "continuous" in dicIn: # there should be continuous data each tick
                 continuousProps = dicIn["continuous"] # read data into dictionary and assign values
