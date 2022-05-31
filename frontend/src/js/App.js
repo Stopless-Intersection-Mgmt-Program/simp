@@ -67,8 +67,8 @@ const App = () => {
 
   return (
     <>
-      <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'center', marginLeft: '25%' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignContent: 'center' }}>
+      <div className="pageRow">
+        <div className="pageColumn">
           {/* Title */}
           <div style={{ textAlign: 'center', paddingTop: "1%", width: "100%", height: '17.5vh' }}>
             <h1 style={{ color: '#80959B' }}>Stopless Intersection Management Program</h1>
@@ -90,6 +90,7 @@ const App = () => {
         {/* SettingsWrapper 
             Holds dropdown, sliders, and buttons*/}
         <div className='settingsWrapper'>
+          {/* DropDown Components */}
           <DropDown
             name='Algorithm:'
             default="First Come First Served"
@@ -101,7 +102,9 @@ const App = () => {
             default="4-Way Intersection"
             setValueForParent={setIntersectionValue}
             options={['4-Way Intersection', 'T-Way Intersection', 'T-Way Flipped']} />
+          {/* End of DropDown Components */}
 
+          {/* Slider Components */}
           <Typography htmlFor='SpawnRate'>Spawn Rate: {spawnRate}</Typography>
           <Slider
             id='SpawnRate'
@@ -144,7 +147,7 @@ const App = () => {
             step={1}
             width="20%"
             onChange={(event) => setPlaySpeed(parseInt(event.target.value))}></Slider>
-
+          {/* End of Slider components */}
           <div style={{ display: "flex", flexDirection: "row", width: "100%" }}>
             {/* Play Button */}
             <Button func={setBtnActive} arg={btnActive} name={btnActive ? "Pause" : "Begin"} />

@@ -8,13 +8,19 @@ const layoutMappings = {
     'T-Way Flipped': [0, 2, 3]
 };
 
+/* degreesToCoords
+    returns x,y positions around a circle of radius based on degrees
+    Shifted by 300 pixels to account for x,y starting from the top-left
+    degrees are shifted back 90 degrees to account for relative starting position
+    error: the vertical shift required after performing `transform(rotate(deg))` to ensure div start is at x,y */
 function degreesToCoords(radius, degrees, error) {
     return ([(300 + radius * Math.sin(Math.PI * (-90 + degrees) / 180)), (300 - radius * Math.cos(Math.PI * (-90 + degrees) / 180) - error)])
 }
 
 
-/* RenderTrafficLight checks if 'Traffic Light' is selected in algorithm dropdown menu
-   renders traffic lights on roads if it is selected */
+/* RenderTrafficLight 
+    checks if 'Traffic Light' is selected in algorithm dropdown menu
+    renders traffic lights on roads if it is selected */
 const RenderTrafficLight = (props) => {
     let render;
     if (props.returnState.lanesCleared != undefined) {
@@ -26,9 +32,9 @@ const RenderTrafficLight = (props) => {
     return render;
 }
 
-/* Road Component: renders a road amongst an intersection,
-    Every class Road contains an arbitrary amount of lanes
-    as a proportion of roadWidth */
+/* Road Component: renders a road div
+    Every Road contains 4 lane div as a proportion of roadWidth.
+    Every Road's length is defined by roadLength which is the width of the world  */
 const RoadComponent = (props) => {
     return (
         <div className="road"
@@ -76,6 +82,10 @@ const RoadComponent = (props) => {
     )
 }
 
+/* RoadRenderer
+    Given a layout[intersectionValue] from layoutMappings
+    calculates position of each Road around the intersection, 
+    and populates the intersection component with the corresponding RoadComponents */
 function RoadRenderer(props) {
     const roadWidth = .15 * props.worldWidth;
     const roadLength = props.worldHeight / 2;
@@ -101,8 +111,8 @@ function RoadRenderer(props) {
     return (roadsToRender)
 }
 
-/* IntersectionComponent: populates the center of the world div
-with an intersection, and a list of roads based on intersection type. */
+/* IntersectionComponent
+    populates the center of the world div with an intersection, and a list of roads based on intersection type. */
 const Intersection = (props) => {
     const intersectionLength = .15 * props.worldWidth + 2;
     return (

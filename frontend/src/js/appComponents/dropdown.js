@@ -4,7 +4,13 @@ import MenuItem from '@mui/material/MenuItem';
 import FormControl from '@mui/material/FormControl';
 import Select from '@mui/material/Select';
 
-
+/* DropDown
+    Renders a UI dropdown using Material UI
+    Props
+        name: ties InputLabel and Select id's to name and renders name as dropdown label text
+        default: sets default value for dropdown placeholder value to be rendered
+        setValueForParent: Updates parent useState when values change using corresponding setState
+        options: an array of values to populate the dropdown menu */
 const DropDown = (props) => {
 
     const optionsArray = props.options;

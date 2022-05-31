@@ -2,6 +2,9 @@ import { useEffect, useState } from 'react'
 
 let spawnedCars = [];
 
+/* detectCollision 
+    detects collision of two rectangles with properties: x,y,width,height
+    returns True if there exists a collision, false otherwise*/
 function detectCollision(r1, r2) {
     if (r1.x + r1.width >= r2.x &&     // r1 right edge past r2 left
         r1.x <= r2.x + r2.width &&       // r1 left edge past r2 right
@@ -32,6 +35,10 @@ const CarComponent = (props) => {
     )
 }
 
+/* CarManager
+    updates list of car positions from the backend, 
+    and renders them as CarComponents with scaling and shifting added to account for different coordinate systems.
+    If car positions cannot be updated it renders the last tick. */
 const CarManager = (props) => {
     useEffect(() => {
         //Constant for collision testing values never change.
@@ -43,7 +50,7 @@ const CarManager = (props) => {
         }
         const fetchState = async () => {
             let returnCars = await props.returnState
-            if (!returnCars) {
+            if (returnCars === undefined) {
                 return spawnedCars
             }
             else {
