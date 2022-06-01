@@ -8,71 +8,84 @@ class Intersection:
         self.speed = 30 # speed (m/s) of cars entering and exiting the intersection
         self.radius = 301 # distance (m) at which cars get spawned and despawned
         self.buffer = buffer # gap (s) added between cars travelling through intersection
+        self.directions = [0, 1, 2, 3] # directions of intersection
 
         self.time = 0 # clock to track time (s) elapsed
         self.cars = [] # list of cars monitored by the intersection
+        self.last = [None] * 8 # last car in each lane
 
-        self.spawn = spawn # average time (s) between car spawns per lane
+        self.spawn = spawn # average cars per second for spawner
         random.seed(0) # seed the spawner for testing consistency
-        self.cooldown = [0, 0, 0, 0, 0, 0, 0, 0] # spawner cooldown (s) for each of the 8 lanes
+        self.distribution = [0.1, 0.2] # probability of a U turn and right turn
+        
+        self.completedCars = 0
+        self.totalWait = 0
+
+        # if self.spawn != 0: self.speed = 60 / (self.spawn + 1) # adjust speed for traffic
 
 
     def schedule(self, car):
         # adds car for intersection to handle
         car.time = self.time # synchronize clocks
-        vt, dt = self.turnSpeed(car), self.turnLength(car.path)
+        vt, dt, lane = self.turnSpeed(car), self.turnLength(car.path), self.turnLanes(car.path)[0]
 
         # loop through other cars and set car to arrive after each
-        car.setCourse(0, 0, vt)
-        for other in self.cars: self.arriveAfter(car, other)
+        ta = max(self.earliestArrival(car, other) for other in self.cars) if len(self.cars) > 0 else 0
+
+        # if self.last[lane] != None:
+        #     if self.last[lane].path != car.path or self.last[lane].course[-2][1] < self.time: df = 0
+        #     else: df = self.last[lane].atTime(self.last[lane].course[-2][1])[0] - 10
+        #     car.followTo(self.last[lane], df, ta - (0 - df) / vt, vt)
+        # else: car.setCourse(0, ta, vt)
+        
+        car.followTo(self.last[lane], 0, ta, vt)
 
         # set car to accelerate to intersection speed once clear of intersection
-        tf = car.atDistance(dt)[0]
-        car.course.append((tf, (self.speed - vt) / car.acceleration + tf, car.acceleration))
+        tf, vf = car.atDistance(dt)
+        car.course.append([tf, (self.speed - vf) / car.acceleration + tf, car.acceleration])
 
-        print("Set course:", car.path, car.course)
+        # print("Set course:", car.path, car.course)
+
         self.cars.append(car)
+        self.last[lane] = car
+
+        # tf, vf = car.atDistance(0)
+        # if tf < ta - 1.e-6 or abs(vt - vf) > 1.e-6:
+        #     print(ta, tf, vt, vf)
+        #     exit()
 
 
-    def arriveAfter(self, car1, car2):
-        # sets car1 to arrive at the intersection after car2
-        overlap, vt1, vt2 = self.overlap(car1.path, car2.path), self.turnSpeed(car1), self.turnSpeed(car2)
-        (li1, lo1), (li2, lo2) = self.turnLanes(car1.path), self.turnLanes(car2.path)
-        if overlap == None or car2.course[-1][1] < self.time: return # no overlap or car2 has already completed its course
+    def earliestArrival(self, car, other):
+        # sets car to arrive at the intersection after other
+        overlap, vt, vto = self.overlap(car.path, other.path), self.turnSpeed(car), self.turnSpeed(other)
+        if overlap == None or other.course[-1][1] < self.time: return 0 # no overlap or other has already completed its course
 
         else: (d1, d2), ta = overlap, 0 # if there is a critical section
-        if car2.distance < d2: # if car2 has not yet cleared the critical section
-            ta = car2.atDistance(d2)[0] - d1 / vt1
-            if ta > car1.atDistance(0)[0]: car1.setCourse(0, ta + self.buffer, vt1)
+        if other.distance < d2: # if other has not yet cleared the critical section
+            ta = other.atDistance(d2)[0] - d1 / vt
 
-        if li1 == li2 and vt1 < vt2: # if car2 starts in the same lane and car1 is slower
-            a1, a2 = car1.acceleration, car2.acceleration
-            tm = car2.course[1][1] + (((a1 * vt2 ** 2 + a2 * vt1 ** 2) / (a1 + a2)) ** 0.5 - vt2) / a2
-            tm, (dm, vm) = tm + d2 / vt2, car2.atTime(tm)
-            if car1.atTime(tm)[0] > dm:
-                car1.setCourse(dm, tm + self.buffer, vm)
-                car1.course.append((tm + self.buffer, (vm - vt1) / a1 + tm, -a1))
+        if self.turnLanes(car.path)[1] == self.turnLanes(other.path)[1] and vt >= vto: # if other ends in the same lane and car is faster
+            dt, vf, a = self.turnLength(car.path), self.speed, car.acceleration
+            ta = other.course[-1][0] # base time is time other leaves intersection
+            ta += (vt - vto) / a - (vt ** 2 - vto ** 2) / (2 * a * vf) - (dt - 10) / vt
 
-        if lo1 == lo2 and vt1 > vt2: # if car2 ends in the same lane and car1 is faster
-            vf, a1, a2 = self.speed, car1.acceleration, car2.acceleration
-            ta = car2.course[-1][0] + (vt1 - vt2) / a2 - ((vf ** 2 - vt2 ** 2) / (2 * a2) - (vf ** 2 - vt1 ** 2) / (2 * a1)) / vf - d1 / vt1
-            if ta > car1.atDistance(0)[0]: car1.setCourse(0, ta + self.buffer, vt1)
+        return ta + self.buffer
 
 
     def turnLanes(self, path):
         # returns start and end lane of the path
         di, do = path
-        return di * 2 + ((do - di) % 4) // 2, do * 2 + ((do - di) % 4 == 1)
+        return di * 2 + ((do - di) % 4 < 2), do * 2 + ((do - di) % 4 == 1)
 
 
     def turnSpeed(self, car):
         # returns the speed (m/s) car can take turn based on radius
         di, do = car.path
         turn = (do - di) % 4
-        if turn == 0: return 0.21 * self.size
-        if turn == 1: return 0.625 * self.size
+        if turn == 0: return min(self.speed, car.turning * (0.21 * self.size))
+        if turn == 1: return min(self.speed, car.turning * (0.625 * self.size))
         if turn == 2: return self.speed
-        if turn == 3: return 0.205 * self.size
+        if turn == 3: return min(self.speed, car.turning * (0.205 * self.size))
 
     
     def turnLength(self, path):
@@ -86,7 +99,7 @@ class Intersection:
 
 
     def overlap(self, path1, path2):
-        # returns start distance on path1 and end distance on path2 of critical section
+        # returns start distance (m) on path1 and end distance (m) on path2 of critical section
         (di1, do1), (di2, do2) = path1, path2
         turn1, turn2 = (do1 - di1) % 4, (do2 - di2) % 4
         reld = (di2 - di1) % 4 # relative direction of other car
@@ -122,38 +135,58 @@ class Intersection:
 
 
     def spawner(self, period):
-        # based on the array of distributions for the 4 turns, randomly spawns cars and schedules them
-        self.cooldown = [t - (period / 1000) if t > 0 else 0 for t in self.cooldown]
+        # based on the array of distributions for the 4 turns, randomly spawns cars and schedules them  
         for lane in range(8): # loop through each lane
-            if self.cooldown[lane] != 0: continue # check if there is a cooldown still in effect
-            if random.random() > (period / (self.spawn * 1000)): continue # adjust for spawn rate
+            last, vs = self.last[lane], self.speed
+            if last != None and last.distance < -self.radius + 10: continue # wait for last to clear spawn box
+            if random.random() > (self.spawn / 8) * (period * 1.e-3): continue # adjust for spawn rate
+
             if lane % 2 == 1: # left lane
-                if random.random() > 0.1: path = (lane // 2, (lane // 2 + 1) % 4) # 90% chance of left turn
+                if random.random() > self.distribution[0]: path = (lane // 2, (lane // 2 + 1) % 4) # 90% chance of left turn
                 else: path = (lane // 2, lane // 2) # 10% chance of U turn
             else: # right lane
-                if random.random() > 0.2: path = (lane // 2, (lane // 2 + 2) % 4) # 80% chance of straight
+                if random.random() > self.distribution[1]: path = (lane // 2, (lane // 2 + 2) % 4) # 80% chance of straight
                 else: path = (lane // 2, (lane // 2 + 3) % 4) # 20% chance of right turn
-            self.schedule(Car.Car(0, -self.radius, self.speed, path))
-            self.cooldown[lane] = 10 / self.speed + self.buffer # set cooldown for lane
+
+            if path[0] not in self.directions or path[1] not in self.directions: return # check if path is valid
+
+            if last != None: # calculate realistic spawn speed given previous car
+                dc, vc, a = last.distance, last.speed, last.acceleration
+                vs = (vc ** 2 + 2 * (dc + self.radius - (10 + 1.e-6)) * a) ** 0.5 # adjust so car can decelerate in time to keep a 10m gap
+                if isinstance(vs, complex): vs = self.speed
+
+            self.schedule(Car.Car(0, -self.radius, min(vs, self.speed), path)) # schedule car and set last spawn and cooldown for lane
 
 
     def tick(self, period):
         # updates properties based on period (ms)
-        self.time += period / 1000
-        for car in self.cars:
-            car.tick(period) # tick each car
-            if car.distance > self.radius: self.cars.remove(car) # remove cars that have cleared the intersection
-        
+        self.time += period * 1.e-3
         if self.spawn > 0: self.spawner(period) # run spawner if active
+
+        self.throughput[self.countT] = [self.time, 0]
+        for car in self.cars.copy():
+            car.tick(period) # tick each car
+            if car.distance - self.turnLength(car.path) > self.radius:
+                self.cars.remove(car) # remove cars that have cleared the intersection
+                self.completedCars += 1
+                self.totalWait += self.time - car.course[0][0]
 
 
     def render(self):
-        # returns list of car ids, coordinates, and directions
-        return [(car.id) + car.render(self.size) + (car.speed) for car in self.cars]
+        # returns list of car details and statistics
+        cars = [[car.id] + list(car.render(self.size)) + [car.speed] for car in self.cars]
+        if self.completedCars > 0:
+            waitTime = self.totalWait / self.completedCars
+            averageSpeed = (self.radius * 2 + self.size) / waitTime
+            throughput = self.completedCars / self.time
+            stats = [waitTime, averageSpeed, throughput]
+        else: stats = [0, 0, 0]
+        return {"cars": cars, "statistics": stats}
 
 
     def tkrender(self, canvas, scale):
         # renders intersection and each car on canvas
+        canvas.create_text(20, 20, text=round(self.time, 2), anchor="nw", fill="white")
         x0, y0 = int(canvas.cget("width")) / 2 + self.size / 2 * scale, int(canvas.cget("height")) / 2 - self.size / 2 * scale
         x1, y1 = int(canvas.cget("width")) / 2 - self.size / 2 * scale, int(canvas.cget("height")) / 2 + self.size / 2 * scale
         canvas.create_rectangle(x0, y0, x1, y1, fill="", width=2, outline="grey12")

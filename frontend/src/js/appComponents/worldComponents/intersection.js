@@ -3,31 +3,39 @@ let spawnBoxes = [];
 
 /* Convert intersection type to road mappings for rendering */
 const layoutMappings = {
-    '4-Way Intersection': [1, 3, 5, 7],
-    'T-Way Intersection': [1, 3, 5],
-    'X-Way Intersection': [2, 4, 6, 8],
-    'Multi-Way Intersection': [1, 2, 3, 4, 5, 6, 7, 8]
+    '4-Way Intersection': [0, 1, 2, 3],
+    'T-Way Intersection': [0, 1, 2],
+    'T-Way Flipped': [0, 2, 3]
 };
 
+/* degreesToCoords
+    returns x,y positions around a circle of radius based on degrees
+    Shifted by 300 pixels to account for x,y starting from the top-left
+    degrees are shifted back 90 degrees to account for relative starting position
+    error: the vertical shift required after performing `transform(rotate(deg))` to ensure div start is at x,y */
 function degreesToCoords(radius, degrees, error) {
     return ([(300 + radius * Math.sin(Math.PI * (-90 + degrees) / 180)), (300 - radius * Math.cos(Math.PI * (-90 + degrees) / 180) - error)])
 }
 
 
-/* RenderTrafficLight checks if 'Traffic Light' is selected in algorithm dropdown menu
-   renders traffic lights on roads if it is selected */
+/* RenderTrafficLight 
+    checks if 'Traffic Light' is selected in algorithm dropdown menu
+    renders traffic lights on roads if it is selected */
 const RenderTrafficLight = (props) => {
-    let render = [];
-    if (props.algorithmValue === "Traffic Light") {
-        render.push(<span className='light' style={{ height: 6, width: 6 }}></span>);
+    let render;
+
+    if (props.returnState.lanesCleared != undefined) {
+        let laneCleared = props.returnState.lanesCleared[props.road][props.lane]
+        let colorValue = laneCleared ? 'rgb(0,255,0)' : 'rgb(255,0,0)';
+        render = (<span className='light' style={{ height: 6, width: 6, backgroundColor: colorValue }} />);
     }
 
     return render;
 }
 
-/* Road Component: renders a road amongst an intersection,
-    Every class Road contains an arbitrary amount of lanes
-    as a proportion of roadWidth */
+/* Road Component: renders a road div
+    Every Road contains 4 lane div as a proportion of roadWidth.
+    Every Road's length is defined by roadLength which is the width of the world  */
 const RoadComponent = (props) => {
     return (
         <div className="road"
@@ -60,7 +68,7 @@ const RoadComponent = (props) => {
                     marginBottom: 0,
 
                 }} >
-                <RenderTrafficLight algorithmValue={props.algorithmValue}></RenderTrafficLight>
+                <RenderTrafficLight returnState={props.returnState} road={props.road} lane={1}></RenderTrafficLight>
             </div>
             <div className="lane"
                 style={{
@@ -68,40 +76,44 @@ const RoadComponent = (props) => {
                     marginTop: 2,
                     marginBottom: 0,
                 }} >
-                <RenderTrafficLight algorithmValue={props.algorithmValue}></RenderTrafficLight>
+                <RenderTrafficLight returnState={props.returnState} road={props.road} lane={0} ></RenderTrafficLight>
             </div>
         </div >
 
     )
 }
 
+/* RoadRenderer
+    Given a layout[intersectionValue] from layoutMappings
+    calculates position of each Road around the intersection, 
+    and populates the intersection component with the corresponding RoadComponents */
 function RoadRenderer(props) {
     const roadWidth = .15 * props.worldWidth;
     const roadLength = props.worldHeight / 2;
     const intersectionType = props.intersectionType;
-
     roadsToRender = [];
-    spawnBoxes = [];
     let coordinates = [];
     let degrees;
 
-    layoutMappings[intersectionType].forEach((road) => {
-        degrees = (road - 1) * 45;
+    layoutMappings[intersectionType].forEach((road, index) => {
+        degrees = (road) * 90;
         coordinates = degreesToCoords(roadLength, degrees, roadWidth / 2);
         roadsToRender.push(
             <RoadComponent
+                key={index}
                 degrees={degrees + 'deg'}
                 spacingLeft={coordinates[0]}
                 spacingTop={coordinates[1]}
                 roadWidth={roadWidth}
                 roadLength={roadLength}
-                algorithmValue={props.algorithmValue} />);
+                returnState={props.returnState}
+                road={index} />);
     })
     return (roadsToRender)
 }
 
-/* IntersectionComponent: populates the center of the world div
-with an intersection, and a list of roads based on intersection type. */
+/* IntersectionComponent
+    populates the center of the world div with an intersection, and a list of roads based on intersection type. */
 const Intersection = (props) => {
     const intersectionLength = .15 * props.worldWidth + 2;
     return (
@@ -112,7 +124,7 @@ const Intersection = (props) => {
                     width: intersectionLength - 1,
                     marginTop: (props.worldHeight - intersectionLength) / 2,
                     marginLeft: (props.worldWidth - intersectionLength) / 2,
-                    intersectionType: props.intersectionType
+                    intersectionType: props.intersectionType,
                 }} />
             <RoadRenderer {...props}></RoadRenderer>
         </>
