@@ -170,7 +170,6 @@ class Intersection:
                 self.cars.remove(car) # remove cars that have cleared the intersection
                 self.completedCars += 1
                 self.totalWait += self.time - car.course[0][0]
-        self.countT = (1 + self.countT) % 51
 
 
     def render(self):
