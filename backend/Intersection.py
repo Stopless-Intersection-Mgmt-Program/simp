@@ -17,8 +17,9 @@ class Intersection:
         self.spawn = spawn # average cars per second for spawner
         random.seed(0) # seed the spawner for testing consistency
         self.distribution = [0.1, 0.2] # probability of a U turn and right turn
-        self.throughput = [[0, 0]] * 51
-        self.countT = 0
+        
+        self.completedCars = 0
+        self.totalWait = 0
 
         # if self.spawn != 0: self.speed = 60 / (self.spawn + 1) # adjust speed for traffic
 
@@ -165,26 +166,22 @@ class Intersection:
         self.throughput[self.countT] = [self.time, 0]
         for car in self.cars.copy():
             car.tick(period) # tick each car
-            if not car.countT and car.distance > 0:
-                car.countT = True
-                self.throughput[self.countT][1] += 1
             if car.distance - self.turnLength(car.path) > self.radius:
                 self.cars.remove(car) # remove cars that have cleared the intersection
+                self.completedCars += 1
+                self.totalWait += self.time - car.course[0][0]
         self.countT = (1 + self.countT) % 51
 
 
     def render(self):
         # returns list of car details and statistics
         cars = [[car.id] + list(car.render(self.size)) + [car.speed] for car in self.cars]
-        stats = [0, 0, 0]
-        for car in self.cars:
-            if not car.countT:
-                stats[0] += car.time # wait time
-        if len(self.cars) > 0:
-            stats[1] = sum([car.speed for car in self.cars]) / len(self.cars) # average speed
-        for t in self.throughput:
-            if t[0] >= self.time - 1:
-                stats[2] += t[1] # throughput
+        if self.completedCars > 0:
+            waitTime = self.totalWait / self.completedCars
+            averageSpeed = (self.radius * 2 + self.size) / waitTime
+            throughput = self.completedCars / self.time
+            stats = [waitTime, averageSpeed, throughput]
+        else: stats = [0, 0, 0]
         return {"cars": cars, "statistics": stats}
 
 
