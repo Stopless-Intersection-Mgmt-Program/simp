@@ -99,7 +99,7 @@ const App = () => {
           {/* End of DropDown Components */}
 
           {/* Slider Components */}
-          <Typography htmlFor='SpawnRate'>Spawn Rate: {spawnRate}</Typography>
+          <Typography htmlFor='SpawnRate'>Spawn Rate: {spawnRate} cars/s</Typography>
           <Slider
             id='SpawnRate'
             size='large'
@@ -110,7 +110,7 @@ const App = () => {
             width="20%"
             onChange={(event) => setSpawnRate(parseInt(event.target.value))}></Slider>
 
-          <Typography id='SpeedLimit'>Speed Limit: {speedLimit}</Typography>
+          <Typography id='SpeedLimit'>Speed Limit: {speedLimit} m/s</Typography>
           <Slider
             id='SpeedLimit'
             size='large'
@@ -121,7 +121,7 @@ const App = () => {
             width="20%"
             onChange={(event) => setSpeedLimit(parseInt(event.target.value))}></Slider>
 
-          <Typography id='Buffer'>Buffer: {bufferValue}</Typography>
+          <Typography id='Buffer'>Buffer: {bufferValue} meters</Typography>
           <Slider
             size='large'
             value={bufferValue}
@@ -131,7 +131,7 @@ const App = () => {
             width="20%"
             onChange={(event) => setBufferValue(parseInt(event.target.value))}></Slider>
 
-          <Typography id='PlaySpeed'>Play Speed: {playSpeed}</Typography>
+          <Typography id='PlaySpeed'>Play Speed: {playSpeed}x</Typography>
           <Slider
             id='PlaySpeed'
             size='large'
