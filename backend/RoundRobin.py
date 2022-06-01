@@ -117,16 +117,17 @@ class RoundRobin(Intersection.Intersection):
         # returns list of car ids, coordinates, and directions
         allcars = self.waiting + self.cars + self.finish
         cars = [[car.id] + list(car.render(self.size)) + [car.speed] for car in allcars]
-        stats = {"waitTime": 0, "throughput": 0, "averageSpeed": 0}
+        stats = [0, 0, 0]
         for car in allcars:
             if not car.countT:
-                stats["waitTime"] += car.time
+                stats[0] += car.time # wait time
         if len(allcars) > 0:
-            stats["averageSpeed"] = sum([car.speed for car in allcars]) / len(allcars)
+            stats[1] = sum([car.speed for car in allcars]) / len(allcars) # average speed
         for t in self.throughput:
             if t[0] >= self.time - 1:
-                stats["throughput"] += t[1]
+                stats[2] += t[1] # throughput
         return {"cars": cars, "statistics": stats}
+        
 
 
     def tkrender(self, canvas, scale):

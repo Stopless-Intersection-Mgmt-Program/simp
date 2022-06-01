@@ -102,8 +102,21 @@ body {
 /* Styling for traffic light */
 .light {
   position: relative;
-  top: -8px;
+  top: -5.5px;
   left: 95px;
   border-radius: 50%;
   display: inline-block;
+}
+
+.statisticsWrapper {
+  display: flex;
+  flex-direction: column;
+  width: 25%;
+  justify-content: left;
+  align-items: left;
+  text-align: left;
+}
+
+.stats {
+  color: #406168
 }

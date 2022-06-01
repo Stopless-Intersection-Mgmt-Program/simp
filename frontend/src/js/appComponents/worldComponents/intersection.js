@@ -23,10 +23,11 @@ function degreesToCoords(radius, degrees, error) {
     renders traffic lights on roads if it is selected */
 const RenderTrafficLight = (props) => {
     let render;
+
     if (props.returnState.lanesCleared != undefined) {
-        let laneCleared = props.returnState.lanesCleared[props.road]
+        let laneCleared = props.returnState.lanesCleared[props.road][props.lane]
         let colorValue = laneCleared ? 'rgb(0,255,0)' : 'rgb(255,0,0)';
-        render = (<span className='light' style={{ height: 6, width: 6, backgroundColor: { colorValue } }} />);
+        render = (<span className='light' style={{ height: 6, width: 6, backgroundColor: colorValue }} />);
     }
 
     return render;
@@ -67,7 +68,7 @@ const RoadComponent = (props) => {
                     marginBottom: 0,
 
                 }} >
-                <RenderTrafficLight returnState={props.returnState} road={props.road}></RenderTrafficLight>
+                <RenderTrafficLight returnState={props.returnState} road={props.road} lane={1}></RenderTrafficLight>
             </div>
             <div className="lane"
                 style={{
@@ -75,7 +76,7 @@ const RoadComponent = (props) => {
                     marginTop: 2,
                     marginBottom: 0,
                 }} >
-                <RenderTrafficLight returnState={props.returnState} road={props.road} ></RenderTrafficLight>
+                <RenderTrafficLight returnState={props.returnState} road={props.road} lane={0} ></RenderTrafficLight>
             </div>
         </div >
 
@@ -106,7 +107,7 @@ function RoadRenderer(props) {
                 roadWidth={roadWidth}
                 roadLength={roadLength}
                 returnState={props.returnState}
-                road={road} />);
+                road={index} />);
     })
     return (roadsToRender)
 }

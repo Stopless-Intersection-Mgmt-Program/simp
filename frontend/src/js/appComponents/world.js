@@ -1,6 +1,6 @@
 import { Intersection } from './worldComponents/intersection.js'
 import CarManager from './worldComponents/cars.js'
-
+import DisplayStatistics from './worldComponents/statistics.js'
 /* World 
     Acts as the parent div of all car divs, roads, and lanes. 
     Sets relative environment for positioning of cars and roadComponents 
@@ -16,6 +16,8 @@ const World = (props) => {
                 }}>
                 <Intersection {...props} />
                 <CarManager {...props} />
+                <DisplayStatistics statistics={props.returnState.statistics}
+                />
             </div>
         </>
     )

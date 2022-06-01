@@ -176,15 +176,15 @@ class Intersection:
     def render(self):
         # returns list of car details and statistics
         cars = [[car.id] + list(car.render(self.size)) + [car.speed] for car in self.cars]
-        stats = {"waitTime": 0, "throughput": 0, "averageSpeed": 0}
+        stats = [0, 0, 0]
         for car in self.cars:
             if not car.countT:
-                stats["waitTime"] += car.time
+                stats[0] += car.time # wait time
         if len(self.cars) > 0:
-            stats["averageSpeed"] = sum([car.speed for car in self.cars]) / len(self.cars)
+            stats[1] = sum([car.speed for car in self.cars]) / len(self.cars) # average speed
         for t in self.throughput:
             if t[0] >= self.time - 1:
-                stats["throughput"] += t[1]
+                stats[2] += t[1] # throughput
         return {"cars": cars, "statistics": stats}
 
 

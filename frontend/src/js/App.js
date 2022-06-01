@@ -32,17 +32,11 @@ const App = () => {
       algorithm: algorithmValue,
       layout: layoutMappings[intersectionValue]
     },
-    continuous:
-    {
-      playSpeed: playSpeed,
-      spawnRate: spawnRate,
-      speedLimit: speedLimit,
-      buffer: bufferValue
-    }
   }
   /* Spawns python3 child process with initialized intersection values
     Using the setProcessInstance api call. Updates returnState  */
   useEffect(() => {
+    console.log("sending", criticalState)
     updateState(setProcessInstance, criticalState, setReturnState)
   }, [intersectionValue, algorithmValue])
 
@@ -127,7 +121,7 @@ const App = () => {
             width="20%"
             onChange={(event) => setSpeedLimit(parseInt(event.target.value))}></Slider>
 
-          <Typography id='Buffer' align='left'>Buffer: {bufferValue}</Typography>
+          <Typography id='Buffer'>Buffer: {bufferValue}</Typography>
           <Slider
             size='large'
             value={bufferValue}
