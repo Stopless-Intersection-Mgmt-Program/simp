@@ -109,7 +109,10 @@ class RoundRobin(Intersection.Intersection):
             car.tick(period)
         for car in self.finish:
             car.tick(period)
-            if car.distance > self.radius: self.finish.remove(car)
+            if car.distance > self.radius:
+                self.finish.remove(car)
+                self.completedCars += 1
+                self.totalWait += self.time - car.course[0][0]
 
         if self.spawn > 0: self.spawner(period)
 
@@ -117,15 +120,12 @@ class RoundRobin(Intersection.Intersection):
         # returns list of car ids, coordinates, and directions
         allcars = self.waiting + self.cars + self.finish
         cars = [[car.id] + list(car.render(self.size)) + [car.speed] for car in allcars]
-        stats = [0, 0, 0]
-        for car in allcars:
-            if not car.countT:
-                stats[0] += car.time # wait time
-        if len(allcars) > 0:
-            stats[1] = sum([car.speed for car in allcars]) / len(allcars) # average speed
-        for t in self.throughput:
-            if t[0] >= self.time - 1:
-                stats[2] += t[1] # throughput
+        if self.completedCars > 0:
+            waitTime = self.totalWait / self.completedCars
+            averageSpeed = (self.radius * 2 + self.size) / waitTime
+            throughput = self.completedCars / self.time
+            stats = [waitTime, averageSpeed, throughput]
+        else: stats = [0, 0, 0]
         return {"cars": cars, "statistics": stats}
         
 
