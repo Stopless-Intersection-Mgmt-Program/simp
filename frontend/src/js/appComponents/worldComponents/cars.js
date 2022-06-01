@@ -48,7 +48,7 @@ const CarManager = (props) => {
             x: 0,
             y: 0
         }
-        const fetchState = async () => {
+        const fetchState = () => {
             let returnCars = props.returnState
             spawnedCars = [];
             returnCars.cars.forEach((car, index) => {
