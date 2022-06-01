@@ -11,7 +11,6 @@ class Car:
         self.distance = distance # distance (m) relative to the enterance of the intersection (negative means approaching intersection)
         self.speed = speed # speed (m/s) of car relative to path
         self.course = [] # list of lists containing a start time, end time, and acceleration
-        self.countT = False
 
 
     def setCourse(self, distance, time, speed):
