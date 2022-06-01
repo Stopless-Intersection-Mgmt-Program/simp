@@ -89,7 +89,7 @@ const App = () => {
             name='Algorithm:'
             default="First Come First Served"
             setValueForParent={setAlgorithmValue}
-            options={['First Come First Served', 'Traffic Light']} />
+            options={['First Come First Served', 'Traffic Light', 'Round Robin (Beta)']} />
 
           <DropDown
             name='Intersection:'

@@ -15,7 +15,7 @@ class Intersection:
         self.last = [None] * 8 # last car in each lane
 
         self.spawn = spawn # average cars per second for spawner
-        random.seed(0) # seed the spawner for testing consistency
+        random.seed() # seed the spawner for testing consistency
         self.distribution = [0.1, 0.2] # probability of a U turn and right turn
         
         self.completedCars = 0
@@ -27,6 +27,7 @@ class Intersection:
     def schedule(self, car):
         # adds car for intersection to handle
         car.time = self.time # synchronize clocks
+        car.spawnTime = self.time
         vt, dt, lane = self.turnSpeed(car), self.turnLength(car.path), self.turnLanes(car.path)[0]
 
         # loop through other cars and set car to arrive after each
@@ -163,13 +164,13 @@ class Intersection:
         self.time += period * 1.e-3
         if self.spawn > 0: self.spawner(period) # run spawner if active
 
-        self.throughput[self.countT] = [self.time, 0]
+       
         for car in self.cars.copy():
             car.tick(period) # tick each car
             if car.distance - self.turnLength(car.path) > self.radius:
                 self.cars.remove(car) # remove cars that have cleared the intersection
                 self.completedCars += 1
-                self.totalWait += self.time - car.course[0][0]
+                self.totalWait += self.time - car.spawnTime
 
 
     def render(self):

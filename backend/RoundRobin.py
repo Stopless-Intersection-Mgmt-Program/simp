@@ -16,6 +16,7 @@ class RoundRobin(Intersection.Intersection):
     def schedule(self, car):
         # adds car for intersection to handle
         car.time = self.time # synchronize clocks
+        car.spawnTime = self.time
         vt, dt = self.turnSpeed(car), self.turnLength(car.path)
 
         # loop through other cars and set car to arrive after each
@@ -112,7 +113,7 @@ class RoundRobin(Intersection.Intersection):
             if car.distance > self.radius:
                 self.finish.remove(car)
                 self.completedCars += 1
-                self.totalWait += self.time - car.course[0][0]
+                self.totalWait += self.time - car.spawnTime
 
         if self.spawn > 0: self.spawner(period)
 

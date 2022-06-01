@@ -14,6 +14,7 @@ class TrafficLight(Intersection.Intersection):
     def schedule(self, car):
         # adds car for intersection to handle
         car.time = self.time # synchronize clocks
+        car.spawnTime = self.time
         self.cars.append(car)
 
         lane = self.turnLanes(car.path)[0]

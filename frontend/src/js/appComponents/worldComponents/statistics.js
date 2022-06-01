@@ -5,13 +5,13 @@ const DisplayStatistics = (props) => {
         return (
             <div className='statisticsWrapper'>
                 <div className='stats'>
-                    Wait Time: {"\n" + props.statistics[0]}
+                    Throughput: {props.statistics[2].toFixed(2)}
                 </div>
                 <div className='stats'>
-                    Throughput: {"\n" + props.statistics[2]}
+                    Wait Time: {props.statistics[0].toFixed(2)}
                 </div>
                 <div className='stats'>
-                    Average Speed: {"\n" + props.statistics[1]}
+                    Avg Speed: {props.statistics[1].toFixed(2)}
                 </div>
             </div>
         );

@@ -12,6 +12,8 @@ class Car:
         self.speed = speed # speed (m/s) of car relative to path
         self.course = [] # list of lists containing a start time, end time, and acceleration
 
+        self.spawnTime = 0
+
 
     def setCourse(self, distance, time, speed):
         # sets course to reach distance (m) at time (s) with speed (m/s)
