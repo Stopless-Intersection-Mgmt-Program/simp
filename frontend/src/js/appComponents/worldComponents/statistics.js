@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import '../../../css/appComponents/worldComponents/statistics.css'
 
 const DisplayStatistics = (props) => {
     if (props.statistics != undefined) {

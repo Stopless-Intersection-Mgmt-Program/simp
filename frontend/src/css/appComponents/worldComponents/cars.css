@@ -1,0 +1,8 @@
+.car {
+    margin: 0;
+    position: absolute;
+    border-radius: 2px;
+    z-index: 2;
+    background-color: #FFFF;
+    border: 1px solid #FFFF;
+}

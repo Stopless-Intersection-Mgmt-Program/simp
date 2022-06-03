@@ -1,3 +1,5 @@
+import '../../css/appComponents/button.css'
+
 /* Button
     Renders a button UI component.
     Props

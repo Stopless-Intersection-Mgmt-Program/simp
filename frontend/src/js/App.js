@@ -1,12 +1,13 @@
 import '../css/App.css';
 import { useState, useEffect } from 'react';
+
 import World from './appComponents/world.js';
-import { layoutMappings } from './appComponents/worldComponents/intersection.js'
-import { updateState, updateTick, setProcessInstance } from './appComponents/apiCalls'
 import DropDown from './appComponents/dropdown.js';
 import Button from './appComponents/button.js'
 import Typography from '@mui/material/Typography';
 import Slider from '@mui/material/Slider'
+import { layoutMappings } from './appComponents/worldComponents/intersection.js'
+import { updateState, updateTick, setProcessInstance } from './appComponents/apiCalls'
 
 const App = () => {
 
@@ -33,10 +34,10 @@ const App = () => {
       layout: layoutMappings[intersectionValue]
     },
   }
+
   /* Spawns python3 child process with initialized intersection values
     Using the setProcessInstance api call. Updates returnState  */
   useEffect(() => {
-    console.log("sending", criticalState)
     updateState(setProcessInstance, criticalState, setReturnState)
   }, [intersectionValue, algorithmValue])
 
@@ -64,7 +65,7 @@ const App = () => {
       <div className="pageRow">
         <div className="pageColumn">
           {/* Title */}
-          <div style={{ textAlign: 'center', paddingTop: "1%", width: "100%", height: '17.5vh' }}>
+          <div className='titleWrapper'>
             <h1 style={{ color: '#80959B' }}>Stopless Intersection Management Program</h1>
             <h2 style={{ color: '#406168' }}>(SIMP)</h2>
           </div>

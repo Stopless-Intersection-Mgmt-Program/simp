@@ -1,13 +1,13 @@
 import axios from 'axios';
 
-/* Calls the api with intersection state and returns the first child_process tick */
+/* Calls the api with the critical intersection state and returns the first child_process tick */
 function setProcessInstance(state) {
     return axios
         .post('http://localhost:3001/apiSetProcessInstance', state)
         .then((output) => { return output.data })
 }
 
-/* Calls the api to return the next child_process tick */
+/* Calls the api with continuous state changes and returns the next child_process tick */
 function updateTick(state) {
     return axios
         .post('http://localhost:3001/apiUpdateTick', state)

@@ -24,13 +24,11 @@ body {
   align-items: center;
 }
 
-.car {
-  margin: 0;
-  position: absolute;
-  border-radius: 2px;
-  z-index: 2;
-  background-color: #FFFF;
-  border: 1px solid #FFFF;
+.titleWrapper {
+  text-align: center;
+  padding-top: 1%;
+  width: 100%;
+  height: 17.5vh;
 }
 
 .settingsWrapper {
@@ -42,81 +40,4 @@ body {
   margin-top: 17.5vh;
   padding: 5%;
   gap: 15px;
-}
-
-.btn {
-  margin: 5%;
-  padding-top: 1%;
-  background-color: #10363F;
-  border-radius: 25px;
-  border-color: #0d2a31;
-  border-width: 100px;
-  box-sizing: border-box;
-  border-color: transparent;
-  color: #80959B;
-  font-size: 18px;
-  height: 30px;
-  width: 50%;
-  text-align: center;
-}
-
-.btn:hover {
-  color: #9FB0B4;
-  background-color: #204148;
-}
-
-.dropDown {
-  background-color: #10363F;
-  color: #80959B;
-}
-
-.intersection {
-  position: absolute;
-  margin-top: 275px;
-  margin-left: 275px;
-  width: 48px;
-  height: 48px;
-  background: #002c36;
-  z-index: 1;
-  border-radius: 10px;
-  border: 1px solid #20464F;
-
-}
-
-.road {
-  z-index: 0;
-  width: 600px;
-  height: 50px;
-  position: absolute;
-}
-
-.lane {
-  height: 20px;
-  width: 100%;
-  margin-top: 2.5px;
-  margin-bottom: 2.5px;
-  background: #20464F;
-  border-radius: 25px
-}
-
-/* Styling for traffic light */
-.light {
-  position: relative;
-  top: -5.5px;
-  left: 95px;
-  border-radius: 50%;
-  display: inline-block;
-}
-
-.statisticsWrapper {
-  display: flex;
-  flex-direction: column;
-  width: 25%;
-  justify-content: left;
-  align-items: left;
-  text-align: left;
-}
-
-.stats {
-  color: #406168
 }

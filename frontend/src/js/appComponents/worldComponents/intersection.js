@@ -1,3 +1,5 @@
+import '../../../css/appComponents/worldComponents/intersection.css'
+
 var roadsToRender = [];
 let spawnBoxes = [];
 

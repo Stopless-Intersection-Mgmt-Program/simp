@@ -1,0 +1,37 @@
+.intersection {
+    position: absolute;
+    margin-top: 275px;
+    margin-left: 275px;
+    width: 48px;
+    height: 48px;
+    background: #002c36;
+    z-index: 1;
+    border-radius: 10px;
+    border: 1px solid #20464F;
+
+}
+
+.road {
+    z-index: 0;
+    width: 600px;
+    height: 50px;
+    position: absolute;
+}
+
+.lane {
+    height: 20px;
+    width: 100%;
+    margin-top: 2.5px;
+    margin-bottom: 2.5px;
+    background: #20464F;
+    border-radius: 25px
+}
+
+/* Styling for traffic light */
+.light {
+    position: relative;
+    top: -5.5px;
+    left: 95px;
+    border-radius: 50%;
+    display: inline-block;
+}
